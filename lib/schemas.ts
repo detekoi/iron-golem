@@ -50,11 +50,11 @@ export const MetadataSchema = z.object({
 export const SessionSummarySchema = z.object({
   summaryVersion: z.literal('1.0'),
   lastUpdated: z.string(), // ISO8601
-  playerContext: PlayerContextSchema,
+  playerContext: PlayerContextSchema.nullable().optional(),
   currentProjects: z.array(ProjectSchema),
   knowledgeBase: KnowledgeBaseSchema,
-  resources: ResourcesSchema,
+  resources: ResourcesSchema.nullable().optional(),
   goals: GoalsSchema,
-  conversationSummary: ConversationSummarySchema,
-  metadata: MetadataSchema,
+  conversationSummary: ConversationSummarySchema.nullable().optional(),
+  metadata: MetadataSchema.nullable().optional(),
 });

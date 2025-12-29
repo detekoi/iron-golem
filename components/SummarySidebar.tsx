@@ -88,7 +88,7 @@ export default function SummarySidebar({ messages, onImport, summary, setSummary
 
             {summary ? (
                 <div className="space-y-6 mt-2 text-gray-300">
-                    {summary.currentProjects.length > 0 && (
+                    {summary.currentProjects?.length > 0 && (
                         <div>
                             <h3 className="text-zinc-500 font-bold mb-2 uppercase text-[10px] tracking-wider">Current Projects</h3>
                             <ul className="space-y-2">
@@ -105,7 +105,7 @@ export default function SummarySidebar({ messages, onImport, summary, setSummary
                         </div>
                     )}
 
-                    {summary.goals.shortTerm.length > 0 && (
+                    {summary.goals?.shortTerm?.length > 0 && (
                         <div>
                             <h3 className="text-zinc-500 font-bold mb-2 uppercase text-[10px] tracking-wider">Goals</h3>
                             <ul className="list-disc pl-4 space-y-1 text-xs">
@@ -116,7 +116,7 @@ export default function SummarySidebar({ messages, onImport, summary, setSummary
                         </div>
                     )}
 
-                    {summary.knowledgeBase.mechanicsLearned.length > 0 && (
+                    {summary.knowledgeBase?.mechanicsLearned?.length > 0 && (
                         <div>
                             <h3 className="text-zinc-500 font-bold mb-2 uppercase text-[10px] tracking-wider">Learned</h3>
                             <div className="flex flex-wrap gap-1">
