@@ -1,13 +1,76 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ChatInterface from '@/components/ChatInterface';
 import SummarySidebar from '@/components/SummarySidebar';
-import { ChatMessage, SessionSummary } from '@/lib/types';
+import { ChatMessage, SessionSummary, ChatSession } from '@/lib/types';
+import { StorageService } from '@/lib/storage';
 
 export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [summary, setSummary] = useState<SessionSummary | null>(null);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [sessionName, setSessionName] = useState('New Chat');
+
+  // Load session on mount
+  useEffect(() => {
+    // Check for active session ID
+    const activeId = StorageService.getActiveSessionId();
+    if (activeId) {
+      const session = StorageService.getSession(activeId);
+      if (session) {
+        setCurrentSessionId(session.id);
+        setMessages(session.messages);
+        setSummary(session.summary);
+        setSessionName(session.name);
+        return;
+      }
+    }
+
+    // Fallback to creating a new one if none exists
+    createNewSession();
+  }, []);
+
+  const createNewSession = () => {
+    const newSession = StorageService.createSession();
+    setCurrentSessionId(newSession.id);
+    setMessages([]);
+    setSummary(null);
+    setSessionName(newSession.name);
+  };
+
+  const loadSession = (session: ChatSession) => {
+    setCurrentSessionId(session.id);
+    setMessages(session.messages);
+    setSummary(session.summary);
+    setSessionName(session.name);
+    StorageService.setActiveSessionId(session.id);
+  };
+
+  // Auto-save effect
+  useEffect(() => {
+    if (!currentSessionId) return;
+
+    // Determine name if it's default
+    let nameToSave = sessionName;
+    if (sessionName === "New Chat" && messages.length > 0) {
+      const firstUserMsg = messages.find(m => m.role === 'user');
+      if (firstUserMsg && firstUserMsg.parts[0].text) {
+        nameToSave = firstUserMsg.parts[0].text.substring(0, 30);
+        if (firstUserMsg.parts[0].text.length > 30) nameToSave += "...";
+        setSessionName(nameToSave);
+      }
+    }
+
+    const updatedSession: ChatSession = {
+      id: currentSessionId,
+      name: nameToSave,
+      messages,
+      summary,
+      lastUpdated: Date.now()
+    };
+    StorageService.saveSession(updatedSession);
+  }, [messages, summary, currentSessionId, sessionName]);
 
   return (
     <main className="h-screen bg-zinc-950 text-white flex flex-col overflow-hidden font-sans selection:bg-green-500/30">
@@ -22,7 +85,9 @@ export default function Home() {
             </h1>
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-[10px] text-zinc-500 font-medium tracking-wider uppercase">Online • Gemini 3 Flash</span>
+              <span className="text-[10px] text-zinc-500 font-medium tracking-wider uppercase">
+                {currentSessionId ? `Session: ${sessionName}` : 'Online • Gemini 3 Flash'}
+              </span>
             </div>
           </div>
         </div>
@@ -37,7 +102,15 @@ export default function Home() {
         </div>
 
         <div className="z-20 h-full border-l border-white/5 bg-zinc-900/80 backdrop-blur-xl shadow-2xl">
-          <SummarySidebar messages={messages} onImport={setSummary} summary={summary} setSummary={setSummary} />
+          <SummarySidebar
+            messages={messages}
+            onImport={setSummary}
+            summary={summary}
+            setSummary={setSummary}
+            currentSessionId={currentSessionId}
+            onLoadSession={loadSession}
+            onCreateSession={createNewSession}
+          />
         </div>
       </div>
     </main>

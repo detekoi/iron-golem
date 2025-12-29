@@ -12,3 +12,11 @@ export interface ChatMessage {
     groundingMetadata?: any;
     isStreaming?: boolean;
 }
+
+export interface ChatSession {
+    id: string;
+    name: string;
+    messages: ChatMessage[];
+    summary: SessionSummary | null;
+    lastUpdated: number;
+}
