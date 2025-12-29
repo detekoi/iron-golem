@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { ChatMessage, SessionSummary } from '@/lib/types';
 import clsx from 'clsx';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChatInterfaceProps {
     messages: ChatMessage[];
@@ -127,7 +129,11 @@ export default function ChatInterface({ messages, setMessages, summary }: ChatIn
                             "p-3 rounded-2xl text-sm leading-relaxed",
                             msg.role === 'user' ? "bg-blue-600 text-white rounded-tr-none" : "bg-zinc-800 text-gray-100 rounded-tl-none"
                         )}>
-                            <div className="whitespace-pre-wrap">{msg.parts[0].text}</div>
+                            <div className="whitespace-pre-wrap [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-2 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:font-bold [&>h3]:mb-1 [&>p]:mb-3 [&>strong]:font-bold [&>a]:text-blue-400 [&>a]:underline [&>blockquote]:border-l-4 [&>blockquote]:border-zinc-500 [&>blockquote]:pl-4 [&>blockquote]:italic">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {msg.parts[0].text}
+                                </ReactMarkdown>
+                            </div>
                             {msg.groundingMetadata?.groundingChunks && (
                                 <div className="mt-3 pt-3 border-t border-white/10 text-xs text-gray-400">
                                     <div className="font-semibold mb-1 opacity-70">Sources</div>
