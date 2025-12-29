@@ -8,10 +8,9 @@ if (!apiKey) {
     }
 }
 
-// Initialize Gemini 3 Client
+// Initialize Gemini Client
 export const client = new GoogleGenAI({
-    apiKey: apiKey || 'dummy',
-    httpOptions: { apiVersion: 'v1alpha' }
+    apiKey: apiKey || 'dummy'
 });
 
 export const MODEL_ID = "gemini-3-flash-preview";

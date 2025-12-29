@@ -10,4 +10,5 @@ export interface ChatMessage {
     parts: { text?: string; thoughtSignature?: string; }[];
     timestamp?: string;
     groundingMetadata?: any;
+    isStreaming?: boolean;
 }

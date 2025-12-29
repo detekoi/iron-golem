@@ -51,49 +51,23 @@ export default function ChatInterface({ messages, setMessages, summary }: ChatIn
                 })
             });
 
-            if (!response.ok) throw new Error('Failed to send message');
-            if (!response.body) throw new Error('No response body');
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error:', response.status, errorText);
+                throw new Error(`Failed to send message: ${response.status} ${errorText}`);
+            }
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
+            // Parse the non-streaming JSON response
+            const data = await response.json();
 
-            // Temporary message for the assistant response
             const assistantMessage: ChatMessage = {
                 role: 'model',
-                parts: [{ text: '' }],
-                timestamp: new Date().toISOString()
+                parts: [{ text: data.text }],
+                timestamp: new Date().toISOString(),
+                groundingMetadata: data.groundingMetadata
             };
 
             setMessages(prev => [...prev, assistantMessage]);
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
-
-                setMessages(prev => {
-                    const newMessages = [...prev];
-                    const lastMsg = newMessages[newMessages.length - 1];
-
-                    lines.forEach(line => {
-                        if (!line.trim()) return;
-                        try {
-                            const data = JSON.parse(line);
-                            if (data.type === 'text') {
-                                // Append text to the last part or create new if needed
-                                lastMsg.parts[0].text = (lastMsg.parts[0].text || '') + data.content;
-                            } else if (data.type === 'grounding') {
-                                lastMsg.groundingMetadata = data.content;
-                            }
-                        } catch (e) {
-                            console.error('Error parsing chunk', e);
-                        }
-                    });
-                    return newMessages;
-                });
-            }
         } catch (error) {
             console.error('Error:', error);
             // Show error state?
@@ -129,7 +103,7 @@ export default function ChatInterface({ messages, setMessages, summary }: ChatIn
                             "p-3 rounded-2xl text-sm leading-relaxed",
                             msg.role === 'user' ? "bg-blue-600 text-white rounded-tr-none" : "bg-zinc-800 text-gray-100 rounded-tl-none"
                         )}>
-                            <div className="whitespace-pre-wrap [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-2 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:font-bold [&>h3]:mb-1 [&>p]:mb-3 [&>strong]:font-bold [&>a]:text-blue-400 [&>a]:underline [&>blockquote]:border-l-4 [&>blockquote]:border-zinc-500 [&>blockquote]:pl-4 [&>blockquote]:italic">
+                            <div className="[&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-2 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:font-bold [&>h3]:mb-1 [&>p]:mb-3 [&>strong]:font-bold [&>a]:text-blue-400 [&>a]:underline [&>blockquote]:border-l-4 [&>blockquote]:border-zinc-500 [&>blockquote]:pl-4 [&>blockquote]:italic">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                     {msg.parts[0].text}
                                 </ReactMarkdown>
