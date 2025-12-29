@@ -51,25 +51,47 @@ export default function Home() {
   useEffect(() => {
     if (!currentSessionId) return;
 
-    // Determine name if it's default
-    let nameToSave = sessionName;
-    if (sessionName === "New Chat" && messages.length > 0) {
-      const firstUserMsg = messages.find(m => m.role === 'user');
-      if (firstUserMsg && firstUserMsg.parts[0].text) {
-        nameToSave = firstUserMsg.parts[0].text.substring(0, 30);
-        if (firstUserMsg.parts[0].text.length > 30) nameToSave += "...";
-        setSessionName(nameToSave);
-      }
-    }
+    const handleAutoSave = async () => {
+      let nameToSave = sessionName;
 
-    const updatedSession: ChatSession = {
-      id: currentSessionId,
-      name: nameToSave,
-      messages,
-      summary,
-      lastUpdated: Date.now()
+      // Generate ID via API if it's "New Chat" and we have context
+      if (sessionName === "New Chat" && messages.length > 0) {
+        // Check if we have at least one user message
+        const firstUserMsg = messages.find(m => m.role === 'user');
+        if (firstUserMsg) {
+          try {
+            const res = await fetch('/api/generate-title', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ messages })
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.title) {
+                nameToSave = data.title;
+                setSessionName(nameToSave);
+              }
+            } else {
+              const err = await res.text();
+              console.error("Title generation API failed:", err);
+            }
+          } catch (e) {
+            console.error("Failed to generate title", e);
+          }
+        }
+      }
+
+      const updatedSession: ChatSession = {
+        id: currentSessionId,
+        name: nameToSave,
+        messages,
+        summary,
+        lastUpdated: Date.now()
+      };
+      StorageService.saveSession(updatedSession);
     };
-    StorageService.saveSession(updatedSession);
+
+    handleAutoSave();
   }, [messages, summary, currentSessionId, sessionName]);
 
   return (
