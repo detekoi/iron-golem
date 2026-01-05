@@ -118,7 +118,7 @@ export default function SessionSidebar({
                     <div className="flex items-center gap-2">
                         {summary && (
                             <button onClick={handleExport} className="text-xs text-zinc-500 hover:text-white flex items-center gap-1 transition-colors">
-                                <Download className="w-3 h-3" /> JSON
+                                <Download className="w-3 h-3" /> Export
                             </button>
                         )}
                         <label className="text-xs text-zinc-500 hover:text-white flex items-center gap-1 cursor-pointer transition-colors">
