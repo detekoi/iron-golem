@@ -11,6 +11,7 @@ export default function Home() {
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [sessionName, setSessionName] = useState('New Chat');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Load session on mount
   useEffect(() => {
@@ -113,6 +114,18 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="p-2 text-zinc-500 hover:text-white transition-colors"
+          title={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
+        >
+          {isSidebarOpen ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-panel-right-close"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M15 3v18" /><path d="m8 9 3 3-3 3" /></svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-panel-right-open"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M15 3v18" /><path d="m8 15 3-3-3-3" /></svg>
+          )}
+        </button>
       </header>
 
       <div className="flex-1 flex overflow-hidden relative">
@@ -123,16 +136,18 @@ export default function Home() {
           <ChatInterface messages={messages} setMessages={setMessages} summary={summary} />
         </div>
 
-        <div className="z-20 h-full border-l border-white/5 bg-zinc-900/80 backdrop-blur-xl shadow-2xl">
-          <SummarySidebar
-            messages={messages}
-            onImport={setSummary}
-            summary={summary}
-            setSummary={setSummary}
-            currentSessionId={currentSessionId}
-            onLoadSession={loadSession}
-            onCreateSession={createNewSession}
-          />
+        <div className={`z-20 h-full border-l border-white/5 bg-zinc-900/80 backdrop-blur-xl shadow-2xl transition-all duration-300 ease-in-out overflow-hidden ${isSidebarOpen ? 'w-80 opacity-100' : 'w-0 opacity-0 border-none'}`}>
+          <div className="w-80 h-full">
+            <SummarySidebar
+              messages={messages}
+              onImport={setSummary}
+              summary={summary}
+              setSummary={setSummary}
+              currentSessionId={currentSessionId}
+              onLoadSession={loadSession}
+              onCreateSession={createNewSession}
+            />
+          </div>
         </div>
       </div>
     </main>

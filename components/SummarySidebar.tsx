@@ -119,58 +119,8 @@ export default function SessionSidebar({
 
     return (
         <div className="w-80 border-l border-white/10 bg-zinc-900/50 flex flex-col h-full overflow-hidden shrink-0">
-            {/* Header */}
-            <div className="p-4 border-b border-white/5 bg-zinc-900/80 backdrop-blur-sm sticky top-0 z-10 flex items-center justify-between">
-                <h2 className="font-semibold text-lg flex items-center gap-2 text-white">
-                    <MessageSquare className="w-5 h-5 text-yellow-500" />
-                    Sessions
-                </h2>
-                <button
-                    onClick={onCreateSession}
-                    className="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded border border-white/10 text-zinc-300 hover:text-white transition-colors"
-                >
-                    <Plus className="w-4 h-4" />
-                </button>
-            </div>
 
-            <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-6 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
-
-                {/* Saved Sessions List */}
-                <div className="mt-4">
-                    {savedSessions.length === 0 ? (
-                        <div className="text-zinc-500 text-xs text-center py-4 italic">No saved sessions</div>
-                    ) : (
-                        <div className="space-y-1">
-                            {savedSessions.map((s) => (
-                                <div key={s.id}
-                                    onClick={() => onLoadSession(s)}
-                                    className={`group flex items-center justify-between p-2 rounded cursor-pointer border transition-all ${currentSessionId === s.id
-                                            ? 'bg-zinc-800/80 border-white/10 shadow-sm'
-                                            : 'bg-transparent border-transparent hover:bg-zinc-800/50 hover:border-white/5'
-                                        }`}
-                                >
-                                    <div className="overflow-hidden flex items-center gap-3">
-                                        <MessageSquare className={`w-3 h-3 ${currentSessionId === s.id ? 'text-green-500' : 'text-zinc-600'}`} />
-                                        <div className="min-w-0">
-                                            <div className={`text-xs font-medium truncate ${currentSessionId === s.id ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-300'}`}>
-                                                {s.name || 'Untitled Session'}
-                                            </div>
-                                            <div className="text-[10px] text-zinc-600">{handleKeyDate(s.lastUpdated)}</div>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={(e) => handleDeleteSession(s.id, e)}
-                                        className="p-1.5 rounded hover:bg-red-500/20 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                <div className="h-px bg-white/5 w-full my-2"></div>
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
 
                 {/* Actions */}
                 <div className="space-y-4">
@@ -250,6 +200,55 @@ export default function SessionSidebar({
                         No summary for this session.<br />Chat with the helper then click "Generate Summary".
                     </div>
                 )}
+            </div>
+
+            {/* Header / Sessions at Bottom */}
+            <div className="bg-zinc-900/80 border-t border-white/5 flex flex-col max-h-[40%]">
+                <div className="p-3 border-b border-white/5 flex items-center justify-between shrink-0">
+                    <h2 className="font-semibold text-sm flex items-center gap-2 text-white/80">
+                        <MessageSquare className="w-4 h-4 text-yellow-500" />
+                        Sessions
+                    </h2>
+                    <button
+                        onClick={onCreateSession}
+                        className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-white transition-colors"
+                        title="New Session"
+                    >
+                        <Plus className="w-4 h-4" />
+                    </button>
+                </div>
+
+                <div className="overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-zinc-700">
+                    {savedSessions.length === 0 ? (
+                        <div className="text-zinc-500 text-xs text-center py-4 italic">No saved sessions</div>
+                    ) : (
+                        savedSessions.map((s) => (
+                            <div key={s.id}
+                                onClick={() => onLoadSession(s)}
+                                className={`group flex items-center justify-between p-2 rounded cursor-pointer border transition-all ${currentSessionId === s.id
+                                    ? 'bg-zinc-800/80 border-white/10 shadow-sm'
+                                    : 'bg-transparent border-transparent hover:bg-zinc-800/50 hover:border-white/5'
+                                    }`}
+                            >
+                                <div className="overflow-hidden flex items-center gap-2 min-w-0">
+                                    <MessageSquare className={`w-3 h-3 shrink-0 ${currentSessionId === s.id ? 'text-green-500' : 'text-zinc-600'}`} />
+                                    <div className="min-w-0 flex-1">
+                                        <div className={`text-xs font-medium truncate ${currentSessionId === s.id ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-300'}`}>
+                                            {s.name || 'Untitled Session'}
+                                        </div>
+                                        <div className="text-[10px] text-zinc-600 truncate">{handleKeyDate(s.lastUpdated)}</div>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={(e) => handleDeleteSession(s.id, e)}
+                                    className="p-1 rounded hover:bg-red-500/20 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <Trash2 className="w-3 h-3" />
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );
