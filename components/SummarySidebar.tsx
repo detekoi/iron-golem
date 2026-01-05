@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, Upload, MessageSquare, Loader2, Save, Trash2, Plus, X, Edit2 } from 'lucide-react';
+import { Download, Upload, MessageSquare, Loader2, Save, Trash2, Plus, X, Edit2, Search } from 'lucide-react';
 import { SessionSummary, ChatMessage, ChatSession } from '@/lib/types';
 import { StorageService } from '@/lib/storage';
 
@@ -24,6 +24,7 @@ export default function SessionSidebar({
 }: SessionSidebarProps) {
     const [loading, setLoading] = useState(false);
     const [savedSessions, setSavedSessions] = useState<ChatSession[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Refresh sessions list
     const refreshSessions = () => {
@@ -204,49 +205,77 @@ export default function SessionSidebar({
 
             {/* Header / Sessions at Bottom */}
             <div className="bg-zinc-900/80 border-t border-white/5 flex flex-col max-h-[40%]">
-                <div className="p-3 border-b border-white/5 flex items-center justify-between shrink-0">
-                    <h2 className="font-semibold text-sm flex items-center gap-2 text-white/80">
-                        <MessageSquare className="w-4 h-4 text-yellow-500" />
-                        Sessions
-                    </h2>
-                    <button
-                        onClick={onCreateSession}
-                        className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-white transition-colors"
-                        title="New Session"
-                    >
-                        <Plus className="w-4 h-4" />
-                    </button>
+                <div className="p-3 border-b border-white/5 space-y-3 shrink-0">
+                    <div className="flex items-center justify-between">
+                        <h2 className="font-semibold text-sm flex items-center gap-2 text-white/80">
+                            <MessageSquare className="w-4 h-4 text-yellow-500" />
+                            Sessions
+                        </h2>
+                        <button
+                            onClick={onCreateSession}
+                            className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-white transition-colors"
+                            title="New Session"
+                        >
+                            <Plus className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    {/* Search Input */}
+                    <div className="relative">
+                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+                        <input
+                            type="text"
+                            placeholder="Search sessions..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-zinc-950/50 border border-white/5 rounded-md py-1.5 pl-8 pr-3 text-xs text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:border-white/10 transition-colors"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-zinc-700">
-                    {savedSessions.length === 0 ? (
-                        <div className="text-zinc-500 text-xs text-center py-4 italic">No saved sessions</div>
+                    {savedSessions
+                        .filter(s => s.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
+                        .length === 0 ? (
+                        <div className="text-zinc-500 text-xs text-center py-4 italic">
+                            {searchQuery ? 'No matching sessions' : 'No saved sessions'}
+                        </div>
                     ) : (
-                        savedSessions.map((s) => (
-                            <div key={s.id}
-                                onClick={() => onLoadSession(s)}
-                                className={`group flex items-center justify-between p-2 rounded cursor-pointer border transition-all ${currentSessionId === s.id
-                                    ? 'bg-zinc-800/80 border-white/10 shadow-sm'
-                                    : 'bg-transparent border-transparent hover:bg-zinc-800/50 hover:border-white/5'
-                                    }`}
-                            >
-                                <div className="overflow-hidden flex items-center gap-2 min-w-0">
-                                    <MessageSquare className={`w-3 h-3 shrink-0 ${currentSessionId === s.id ? 'text-green-500' : 'text-zinc-600'}`} />
-                                    <div className="min-w-0 flex-1">
-                                        <div className={`text-xs font-medium truncate ${currentSessionId === s.id ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-300'}`}>
-                                            {s.name || 'Untitled Session'}
-                                        </div>
-                                        <div className="text-[10px] text-zinc-600 truncate">{handleKeyDate(s.lastUpdated)}</div>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={(e) => handleDeleteSession(s.id, e)}
-                                    className="p-1 rounded hover:bg-red-500/20 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                        savedSessions
+                            .filter(s => s.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
+                            .map((s) => (
+                                <div key={s.id}
+                                    onClick={() => onLoadSession(s)}
+                                    className={`group flex items-center justify-between p-2 rounded cursor-pointer border transition-all ${currentSessionId === s.id
+                                        ? 'bg-zinc-800/80 border-white/10 shadow-sm'
+                                        : 'bg-transparent border-transparent hover:bg-zinc-800/50 hover:border-white/5'
+                                        }`}
                                 >
-                                    <Trash2 className="w-3 h-3" />
-                                </button>
-                            </div>
-                        ))
+                                    <div className="overflow-hidden flex items-center gap-2 min-w-0">
+                                        <MessageSquare className={`w-3 h-3 shrink-0 ${currentSessionId === s.id ? 'text-green-500' : 'text-zinc-600'}`} />
+                                        <div className="min-w-0 flex-1">
+                                            <div className={`text-xs font-medium truncate ${currentSessionId === s.id ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-300'}`}>
+                                                {s.name || 'Untitled Session'}
+                                            </div>
+                                            <div className="text-[10px] text-zinc-600 truncate">{handleKeyDate(s.lastUpdated)}</div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={(e) => handleDeleteSession(s.id, e)}
+                                        className="p-1 rounded hover:bg-red-500/20 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <Trash2 className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            ))
                     )}
                 </div>
             </div>
