@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, Upload, MessageSquare, Loader2, Save, Trash2, Plus, X, Edit2, Search } from 'lucide-react';
+import { Share, FolderOpen, MessageSquare, Loader2, Save, Trash2, Plus, X, Edit2, Search } from 'lucide-react';
 import { SessionSummary, ChatMessage, ChatSession } from '@/lib/types';
 import { StorageService } from '@/lib/storage';
 
@@ -118,11 +118,11 @@ export default function SessionSidebar({
                     <div className="flex items-center gap-2">
                         {summary && (
                             <button onClick={handleExport} className="text-xs text-zinc-500 hover:text-white flex items-center gap-1 transition-colors">
-                                <Download className="w-3 h-3" /> Export
+                                <Share className="w-3 h-3" /> Export
                             </button>
                         )}
                         <label className="text-xs text-zinc-500 hover:text-white flex items-center gap-1 cursor-pointer transition-colors">
-                            <Upload className="w-3 h-3" /> Import
+                            <FolderOpen className="w-3 h-3" /> Import
                             <input type="file" className="hidden" accept=".json" onChange={handleImport} />
                         </label>
                     </div>
