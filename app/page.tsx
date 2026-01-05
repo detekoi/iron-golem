@@ -12,6 +12,7 @@ export default function Home() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [sessionName, setSessionName] = useState('New Chat');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   // Load session on mount
   useEffect(() => {
@@ -46,6 +47,35 @@ export default function Home() {
     setSummary(session.summary);
     setSessionName(session.name);
     StorageService.setActiveSessionId(session.id);
+  };
+
+  // Automatic Summary Generation
+  useEffect(() => {
+    if (messages.length < 2) return;
+
+    const lastMessage = messages[messages.length - 1];
+    // Only generate if the last message is from the model (AI has responded)
+    if (lastMessage.role === 'model') {
+      generateSummary();
+    }
+  }, [messages]);
+
+  const generateSummary = async () => {
+    setIsGeneratingSummary(true);
+    try {
+      const res = await fetch('/api/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages })
+      });
+      if (!res.ok) throw new Error("Failed to generate");
+      const data = await res.json();
+      setSummary(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsGeneratingSummary(false);
+    }
   };
 
   // Auto-save effect
@@ -146,6 +176,7 @@ export default function Home() {
               currentSessionId={currentSessionId}
               onLoadSession={loadSession}
               onCreateSession={createNewSession}
+              isGenerating={isGeneratingSummary}
             />
           </div>
         </div>

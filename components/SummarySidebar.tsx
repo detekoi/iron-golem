@@ -11,6 +11,7 @@ interface SessionSidebarProps {
     currentSessionId: string | null;
     onLoadSession: (session: ChatSession) => void;
     onCreateSession: () => void;
+    isGenerating?: boolean;
 }
 
 export default function SessionSidebar({
@@ -20,9 +21,9 @@ export default function SessionSidebar({
     setSummary,
     currentSessionId,
     onLoadSession,
-    onCreateSession
+    onCreateSession,
+    isGenerating = false
 }: SessionSidebarProps) {
-    const [loading, setLoading] = useState(false);
     const [savedSessions, setSavedSessions] = useState<ChatSession[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -45,26 +46,7 @@ export default function SessionSidebar({
         }
     }, [summary]);
 
-    const generateSummary = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch('/api/summary', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages })
-            });
-            if (!res.ok) throw new Error("Failed to generate");
-            const data = await res.json();
-            setSummary(data);
-
-            // Trigger an auto-save in parent immediately after summary update if possible,
-            // but the parent `useEffect` on `summary` change will likely handle it.
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Generate Summary logic has been moved to parent
 
     const handleSaveSession = () => {
         // This function is no longer used directly for saving new sessions via a dialog.
@@ -124,19 +106,23 @@ export default function SessionSidebar({
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
 
                 {/* Actions */}
-                <div className="space-y-4">
-                    <button
-                        onClick={generateSummary}
-                        disabled={loading || messages.length < 2}
-                        className="w-full bg-green-600 hover:bg-green-700 py-2.5 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium transition-all shadow-lg shadow-green-900/20 active:scale-95"
-                    >
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                        {summary ? 'Update Summary' : 'Generate Summary'}
-                    </button>
+                <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                    <h3 className="text-zinc-500 font-bold uppercase text-[10px] tracking-wider">
+                        {isGenerating ? (
+                            <span className="flex items-center gap-1.5 text-emerald-400">
+                                <Loader2 className="w-3 h-3 animate-spin" /> Updating...
+                            </span>
+                        ) : 'Current View'}
+                    </h3>
 
-                    <div className="flex gap-2">
-                        <label className="flex-1 bg-zinc-800 hover:bg-zinc-700 border border-white/10 py-2 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors text-xs text-zinc-300">
-                            <Upload className="w-3.5 h-3.5" /> Import JSON
+                    <div className="flex items-center gap-2">
+                        {summary && (
+                            <button onClick={handleExport} className="text-xs text-zinc-500 hover:text-white flex items-center gap-1 transition-colors">
+                                <Download className="w-3 h-3" /> JSON
+                            </button>
+                        )}
+                        <label className="text-xs text-zinc-500 hover:text-white flex items-center gap-1 cursor-pointer transition-colors">
+                            <Upload className="w-3 h-3" /> Import
                             <input type="file" className="hidden" accept=".json" onChange={handleImport} />
                         </label>
                     </div>
@@ -144,14 +130,9 @@ export default function SessionSidebar({
 
                 {/* Active Summary View */}
                 {summary ? (
-                    <div className="space-y-6 pt-4 border-t border-white/5">
+                    <div className="space-y-6 pt-2">
 
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-zinc-500 font-bold uppercase text-[10px] tracking-wider">Current View</h3>
-                            <button onClick={handleExport} className="text-xs text-zinc-500 hover:text-white flex items-center gap-1 transition-colors">
-                                <Download className="w-3 h-3" /> JSON
-                            </button>
-                        </div>
+                        {/* Export/View Header removed as it's merged above */}
 
                         {summary.currentProjects?.length > 0 && (
                             <div>
@@ -198,7 +179,7 @@ export default function SessionSidebar({
                     </div>
                 ) : (
                     <div className="text-zinc-500 text-center py-10 px-4 italic text-xs border border-dashed border-zinc-800 rounded-lg">
-                        No summary for this session.<br />Chat with the helper then click "Generate Summary".
+                        {isGenerating ? 'Generating first summary...' : 'Start chatting to see a session summary.'}
                     </div>
                 )}
             </div>
