@@ -18,13 +18,41 @@ export default function ChatInterface({ messages, setMessages, summary }: ChatIn
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const prevMessagesLength = useRef(0);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
     useEffect(() => {
-        scrollToBottom();
+        // Initial load or massive change (history reload)
+        if (messages.length > 0 && prevMessagesLength.current === 0) {
+            scrollToBottom();
+        }
+        // Single message added
+        else if (messages.length > prevMessagesLength.current) {
+            const lastMessage = messages[messages.length - 1];
+
+            if (lastMessage.role === 'user') {
+                // For user messages, just ensure they are visible at bottom
+                scrollToBottom();
+            }
+            else if (lastMessage.role === 'model') {
+                // When AI replies, snap the PREVIOUS message (User's question) to the top
+                const userMsgIndex = messages.length - 2;
+                if (userMsgIndex >= 0) {
+                    setTimeout(() => {
+                        const msgId = `message-${userMsgIndex}`;
+                        const el = document.getElementById(msgId);
+                        if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }
+                    }, 100);
+                }
+            }
+        }
+
+        prevMessagesLength.current = messages.length;
     }, [messages]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -88,8 +116,8 @@ export default function ChatInterface({ messages, setMessages, summary }: ChatIn
                 )}
 
                 {messages.map((msg, idx) => (
-                    <div key={idx} className={clsx(
-                        "flex gap-3 max-w-[80%]",
+                    <div key={idx} id={`message-${idx}`} className={clsx(
+                        "flex gap-3 max-w-[80%] scroll-mt-8",
                         msg.role === 'user' ? "ml-auto flex-row-reverse" : "mr-auto"
                     )}>
                         <div className={clsx(
