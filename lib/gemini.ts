@@ -1,4 +1,4 @@
-import { GoogleGenAI, type Content, type Tool, type GenerateContentConfig } from '@google/genai';
+import { GoogleGenAI, type Content, type Tool, type GenerateContentConfig, Type, FunctionCallingConfigMode } from '@google/genai';
 
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -14,11 +14,42 @@ export const client = new GoogleGenAI({
 });
 
 export const MODEL_ID = "gemini-3-flash-preview";
+
+export const CRAFTING_TOOL: Tool = {
+    functionDeclarations: [{
+        name: "display_crafting_recipe",
+        description: "Displays a Minecraft crafting recipe in a visual 3x3 grid. Use this WHENEVER a user asks how to craft something or asks for a recipe.",
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                slots: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING },
+                    description: "Array of 9 strings representing the 3x3 crafting grid. Use item names (e.g. 'Iron Ingot', 'Stick', 'Air'). Use 'Air' for empty slots. Row by row, top-left to bottom-right.",
+                },
+                outputItem: {
+                    type: Type.STRING,
+                    description: "The name of the item created (e.g. 'Iron Pickaxe').",
+                },
+                outputAmount: {
+                    type: Type.INTEGER,
+                    description: "The number of items created (usually 1).",
+                },
+            },
+            required: ["slots", "outputItem", "outputAmount"],
+        },
+    }]
+};
+
 export const SEARCH_TOOL: Tool = { googleSearch: {} };
 
 export const SYSTEM_INSTRUCTION = `You are a helpful and knowledgeable Minecraft expert. 
 Your goal is to assist players with crafting recipes, game mechanics, updates, building strategies, and redstone tutorials.
 Always ensure your answers are accurate and relevant to Minecraft.
+
+### CRITICAL INSTRUCTION: TOOLS
+- If a user asks for a crafting recipe, you **MUST** use the \`display_crafting_recipe\` tool.
+- Do not just describe the recipe in text if you can display it.
 
 ### CRITICAL INSTRUCTION: SEARCH GROUNDING
 You must **ALWAYS** use the Google Search tool when answering questions about:
@@ -44,7 +75,7 @@ export async function generateChatResponse(
         model: modelId,
         config: {
             thinkingConfig: { thinkingLevel: thinkingLevel as any },
-            tools: [SEARCH_TOOL],
+            tools: [SEARCH_TOOL], // REMOVED CRAFTING_TOOL to avoid conflict
             systemInstruction: SYSTEM_INSTRUCTION,
         },
         history,
@@ -63,11 +94,29 @@ export async function generateChatStream(
         model: modelId,
         config: {
             thinkingConfig: { thinkingLevel: thinkingLevel as any },
-            tools: [SEARCH_TOOL],
+            tools: [SEARCH_TOOL], // REMOVED CRAFTING_TOOL
             systemInstruction: SYSTEM_INSTRUCTION,
         },
         history,
     });
 
     return chat.sendMessageStream({ message: lastUserMessage });
+}
+
+// New dedicated function for recipe generation
+export async function generateCraftingRecipe(
+    itemQuery: string,
+    modelId: string = MODEL_ID
+) {
+    const chat = client.chats.create({
+        model: modelId,
+        config: {
+            // No thinking, No search - just tools
+            tools: [CRAFTING_TOOL],
+            toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY } },
+            systemInstruction: "You are a Minecraft recipe database. Your ONLY job is to output the crafting recipe for the requested item using the display_crafting_recipe tool.",
+        }
+    });
+
+    return chat.sendMessage({ message: `Recipe for: ${itemQuery}` });
 }

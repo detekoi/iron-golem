@@ -6,6 +6,7 @@ import { ChatMessage, SessionSummary } from '@/lib/types';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import CraftingRecipe from './CraftingRecipe';
 
 interface ChatInterfaceProps {
     messages: ChatMessage[];
@@ -92,7 +93,8 @@ export default function ChatInterface({ messages, setMessages, summary }: ChatIn
                 role: 'model',
                 parts: [{ text: data.text }],
                 timestamp: new Date().toISOString(),
-                groundingMetadata: data.groundingMetadata
+                groundingMetadata: data.groundingMetadata,
+                craftingRecipe: data.craftingRecipe // Capture recipe from API
             };
 
             setMessages(prev => [...prev, assistantMessage]);
@@ -136,6 +138,12 @@ export default function ChatInterface({ messages, setMessages, summary }: ChatIn
                                     {msg.parts[0].text}
                                 </ReactMarkdown>
                             </div>
+
+                            {/* Render Crafting Recipe if present */}
+                            {msg.craftingRecipe && (
+                                <CraftingRecipe recipe={msg.craftingRecipe} />
+                            )}
+
                             {msg.groundingMetadata?.groundingChunks && (
                                 <div className="mt-3 pt-3 border-t border-white/10 text-xs text-gray-400">
                                     <div className="font-semibold mb-1 opacity-70">Sources</div>
@@ -179,7 +187,7 @@ export default function ChatInterface({ messages, setMessages, summary }: ChatIn
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="How do I build an iron farm?"
+                    placeholder="How do I craft an Iron Sword?"
                     className="w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl py-4 pl-4 pr-12 focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder-zinc-500"
                     disabled={isLoading}
                 />

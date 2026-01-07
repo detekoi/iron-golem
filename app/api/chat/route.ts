@@ -27,21 +27,50 @@ export async function POST(req: NextRequest) {
         }
 
         // Use non-streaming API
-        const response = await generateChatResponse(history, lastMessage);
+        // PASS 1: Main Chat (Thinking + Search Enabled)
+        const responsePromise = generateChatResponse(history, lastMessage);
+
+        // PASS 2: Check if we need a recipe (Parallel execution if keywords found)
+        let recipePromise = Promise.resolve<any>(null);
+        const lowerMsg = lastMessage.toLowerCase();
+        if (lowerMsg.includes('craft') || lowerMsg.includes('recipe') || lowerMsg.includes('make') || lowerMsg.includes('build')) {
+            console.log("Creating dedicated recipe request for:", lastMessage);
+            recipePromise = import('@/lib/gemini').then(mod => mod.generateCraftingRecipe(lastMessage));
+        }
+
+        const [response, recipeResponse] = await Promise.all([responsePromise, recipePromise]);
 
         const candidate = response.candidates?.[0];
         const text = candidate?.content?.parts?.[0]?.text || '';
         const groundingMetadata = candidate?.groundingMetadata;
 
+        // Check for function calls (tools) from the RECIPE response
+        let craftingRecipe: any = undefined;
+
+        if (recipeResponse) {
+            const functionCalls = recipeResponse.functionCalls;
+            if (functionCalls && functionCalls.length > 0) {
+                const recipeCall = functionCalls.find((fc: any) => fc.name === 'display_crafting_recipe');
+                if (recipeCall) {
+                    craftingRecipe = recipeCall.args;
+                }
+            }
+        }
+
         return new Response(JSON.stringify({
             text,
-            groundingMetadata
+            groundingMetadata,
+            craftingRecipe
         }), {
             headers: { 'Content-Type': 'application/json' }
         });
 
-    } catch (error) {
-        console.error('API Error:', error);
-        return new Response('Internal Server Error', { status: 500 });
+    } catch (error: any) {
+        console.error('API Error Details:', {
+            message: error.message,
+            stack: error.stack,
+            response: error.response ? await error.response.text() : undefined
+        });
+        return new Response(`Internal Server Error: ${error.message}`, { status: 500 });
     }
 }
