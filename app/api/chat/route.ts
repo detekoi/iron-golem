@@ -30,12 +30,16 @@ export async function POST(req: NextRequest) {
         // PASS 1: Main Chat (Thinking + Search Enabled)
         const responsePromise = generateChatResponse(history, lastMessage);
 
-        // PASS 2: Check if we need a recipe (Parallel execution if keywords found)
+        // PASS 2: Check if we need a recipe (Parallel execution if router says yes)
         let recipePromise = Promise.resolve<any>(null);
-        const lowerMsg = lastMessage.toLowerCase();
-        if (lowerMsg.includes('craft') || lowerMsg.includes('recipe') || lowerMsg.includes('make') || lowerMsg.includes('build')) {
-            console.log("Creating dedicated recipe request for:", lastMessage);
-            recipePromise = import('@/lib/gemini').then(mod => mod.generateCraftingRecipe(lastMessage));
+
+        // Use LLM Router to determine intent
+        const geminiLib = await import('@/lib/gemini');
+        const shouldFetchRecipe = await geminiLib.isCraftingQuery(lastMessage);
+
+        if (shouldFetchRecipe) {
+            console.log("LLM Router detected recipe request for:", lastMessage);
+            recipePromise = geminiLib.generateCraftingRecipe(lastMessage);
         }
 
         const [response, recipeResponse] = await Promise.all([responsePromise, recipePromise]);

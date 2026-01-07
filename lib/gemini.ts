@@ -47,10 +47,6 @@ export const SYSTEM_INSTRUCTION = `You are a helpful and knowledgeable Minecraft
 Your goal is to assist players with crafting recipes, game mechanics, updates, building strategies, and redstone tutorials.
 Always ensure your answers are accurate and relevant to Minecraft.
 
-### CRITICAL INSTRUCTION: TOOLS
-- If a user asks for a crafting recipe, you **MUST** use the \`display_crafting_recipe\` tool.
-- Do not just describe the recipe in text if you can display it.
-
 ### CRITICAL INSTRUCTION: SEARCH GROUNDING
 You must **ALWAYS** use the Google Search tool when answering questions about:
 1.  **New Features & Updates**: Any content from 2024, 2025 or later.
@@ -119,4 +115,44 @@ export async function generateCraftingRecipe(
     });
 
     return chat.sendMessage({ message: `Recipe for: ${itemQuery}` });
+}
+
+export const ROUTER_MODEL_ID = "gemini-2.5-flash-lite";
+
+export async function isCraftingQuery(text: string): Promise<boolean> {
+    try {
+        const result = await client.models.generateContent({
+            model: ROUTER_MODEL_ID,
+            config: {
+                responseMimeType: "application/json",
+                // @ts-ignore - Schema typing in beta SDK can be strict
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        isRecipeRequest: { type: Type.BOOLEAN }
+                    }
+                }
+            },
+            contents: `Analyze if the user is asking for a Minecraft crafting recipe, how to make/build an item, or details about an item's components.
+            
+            Examples:
+            "How do I make a bed?" -> true
+            "Recipe for iron sword" -> true
+            "What about a purple bed?" -> true
+            "Show me the grid for a piston" -> true
+            "Where do I find diamonds?" -> false (asking for location)
+            "What implies a redstone signal?" -> false
+            
+            User Query: "${text}"`
+        });
+
+        const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!responseText) return false;
+
+        const data = JSON.parse(responseText);
+        return data.isRecipeRequest === true;
+    } catch (e) {
+        console.error("Router check failed, falling back to false:", e);
+        return false;
+    }
 }
