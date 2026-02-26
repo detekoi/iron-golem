@@ -122,7 +122,6 @@ Provide detailed information. Extract as much as you can from the conversation.`
         // Provide defaults for missing fields
         const dataWithDefaults = {
             summaryVersion: '1.0' as const,
-            lastUpdated: new Date().toISOString(),
             currentProjects: [],
             knowledgeBase: {
                 mechanicsLearned: [],
@@ -134,6 +133,8 @@ Provide detailed information. Extract as much as you can from the conversation.`
                 longTerm: [],
             },
             ...parsedData,
+            // Always use server time, not whatever Gemini hallucinated
+            lastUpdated: new Date().toISOString(),
         };
 
         const validationResult = SessionSummarySchema.safeParse(dataWithDefaults);
