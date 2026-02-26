@@ -331,7 +331,7 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="How do I craft an Iron Sword?"
-                    className="w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl py-3 md:py-4 pl-3 md:pl-4 pr-12 focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder-zinc-500 text-sm md:text-base"
+                    className="w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl py-3 md:py-4 pl-3 md:pl-4 pr-12 focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder-zinc-500 text-base"
                     disabled={isLoading}
                 />
                 <button

@@ -169,7 +169,7 @@ export default function Home() {
   }, [messages, summary, currentSessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <main className="h-screen bg-zinc-950 text-white flex flex-col overflow-hidden font-sans selection:bg-green-500/30">
+    <main className="h-screen-safe bg-zinc-950 text-white flex flex-col overflow-hidden font-sans selection:bg-green-500/30">
       <header className="min-h-14 md:h-16 px-3 md:px-6 border-b border-white/5 bg-zinc-900/50 backdrop-blur shrink-0 flex items-center justify-between select-none gap-2 py-2">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <div className="w-7 h-7 md:w-8 md:h-8 bg-gradient-to-br from-green-600 to-emerald-800 rounded-lg flex items-center justify-center shadow-lg shadow-green-900/20 border border-green-500/20 overflow-hidden shrink-0">

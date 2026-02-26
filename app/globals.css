@@ -55,3 +55,8 @@ body {
 ::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* Use dynamic viewport height so mobile browser chrome doesn't hide content */
+.h-screen-safe {
+  height: 100dvh;
+}
