@@ -64,8 +64,10 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
         setMessages(allMessages);
         setInput('');
         setIsLoading(true);
-        // Mark this user message for scroll-to-top
-        pendingScrollIdx.current = allMessages.length - 1;
+        // Only scroll-to-top for follow-up messages (not the first message in a chat)
+        if (messages.length > 0) {
+            pendingScrollIdx.current = allMessages.length - 1;
+        }
 
         try {
             const response = await fetch('/api/chat', {
@@ -317,7 +319,7 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                 )}
 
                 {/* Spacer: gives room to scroll user message to top while AI is responding */}
-                {isLoading && (
+                {isLoading && messages.length > 1 && (
                     <div style={{ minHeight: '80vh' }} />
                 )}
 
