@@ -23,9 +23,17 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const prevMessagesLength = useRef(0);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollToBottom = (instant?: boolean) => {
+        messagesEndRef.current?.scrollIntoView({ behavior: instant ? "instant" : "smooth" });
     };
+
+    // Auto-scroll during streaming
+    useEffect(() => {
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg?.isStreaming) {
+            scrollToBottom(true);
+        }
+    }, [messages]);
 
     useEffect(() => {
         // Initial load or massive change (history reload)
@@ -68,7 +76,8 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
             timestamp: new Date().toISOString()
         };
 
-        setMessages(prev => [...prev, userMessage]);
+        const allMessages = [...messages, userMessage];
+        setMessages(allMessages);
         setInput('');
         setIsLoading(true);
 
@@ -77,9 +86,9 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    messages: [...messages, userMessage],
-                    summary, // Pass current summary context
-                    edition  // Pass selected edition
+                    messages: allMessages,
+                    summary,
+                    edition
                 })
             });
 
@@ -89,21 +98,83 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                 throw new Error(`Failed to send message: ${response.status} ${errorText}`);
             }
 
-            // Parse the non-streaming JSON response
-            const data = await response.json();
-
+            // Add placeholder streaming message
             const assistantMessage: ChatMessage = {
                 role: 'model',
-                parts: [{ text: data.text }],
+                parts: [{ text: '' }],
                 timestamp: new Date().toISOString(),
-                groundingMetadata: data.groundingMetadata,
-                craftingRecipe: data.craftingRecipe // Capture recipe from API
+                isStreaming: true
             };
-
             setMessages(prev => [...prev, assistantMessage]);
+
+            // Read the SSE stream
+            const reader = response.body!.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let accumulatedText = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    const jsonStr = line.slice(6);
+                    let event: any;
+                    try { event = JSON.parse(jsonStr); } catch { continue; }
+
+                    if (event.type === 'text') {
+                        accumulatedText += event.content;
+                        const currentText = accumulatedText;
+                        setMessages(prev => {
+                            const updated = [...prev];
+                            const last = updated[updated.length - 1];
+                            updated[updated.length - 1] = { ...last, parts: [{ text: currentText }] };
+                            return updated;
+                        });
+                    } else if (event.type === 'metadata') {
+                        setMessages(prev => {
+                            const updated = [...prev];
+                            const last = updated[updated.length - 1];
+                            updated[updated.length - 1] = { ...last, groundingMetadata: event.groundingMetadata };
+                            return updated;
+                        });
+                    } else if (event.type === 'recipe') {
+                        setMessages(prev => {
+                            const updated = [...prev];
+                            const last = updated[updated.length - 1];
+                            updated[updated.length - 1] = { ...last, craftingRecipe: event.craftingRecipe };
+                            return updated;
+                        });
+                    } else if (event.type === 'done') {
+                        setMessages(prev => {
+                            const updated = [...prev];
+                            const last = updated[updated.length - 1];
+                            updated[updated.length - 1] = { ...last, isStreaming: false };
+                            return updated;
+                        });
+                    }
+                }
+            }
         } catch (error) {
             console.error('Error:', error);
-            // Show error state?
+            // Clear streaming state on error
+            setMessages(prev => {
+                const updated = [...prev];
+                const last = updated[updated.length - 1];
+                if (last?.isStreaming) {
+                    updated[updated.length - 1] = {
+                        ...last,
+                        isStreaming: false,
+                        parts: [{ text: last.parts[0]?.text || 'Sorry, an error occurred.' }]
+                    };
+                }
+                return updated;
+            });
         } finally {
             setIsLoading(false);
         }
@@ -164,6 +235,9 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                                 >
                                     {msg.parts[0].text}
                                 </ReactMarkdown>
+                                {msg.isStreaming && (
+                                    <span className="inline-block w-2 h-4 ml-0.5 bg-emerald-400 rounded-sm animate-pulse align-middle" />
+                                )}
                             </div>
 
                             {/* Render Crafting Recipe if present */}

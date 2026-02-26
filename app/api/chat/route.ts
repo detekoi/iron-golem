@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { generateChatResponse } from '@/lib/gemini';
+import { generateChatStream } from '@/lib/gemini';
 
 export async function POST(req: NextRequest) {
     try {
@@ -27,47 +27,82 @@ export async function POST(req: NextRequest) {
             ];
         }
 
-        // Use non-streaming API
-        // PASS 1: Main Chat (Thinking + Search Enabled)
-        const responsePromise = generateChatResponse(history, lastMessage, selectedEdition);
-
-        // PASS 2: Check if we need a recipe (Parallel execution if router says yes)
-        let recipePromise = Promise.resolve<any>(null);
-
-        // Use LLM Router to determine intent
+        // Start recipe check in parallel (non-blocking)
         const geminiLib = await import('@/lib/gemini');
-        const shouldFetchRecipe = await geminiLib.isCraftingQuery(lastMessage);
+        const recipePromise = (async () => {
+            try {
+                const shouldFetchRecipe = await geminiLib.isCraftingQuery(lastMessage);
+                if (shouldFetchRecipe) {
+                    console.log("LLM Router detected recipe request for:", lastMessage);
+                    return geminiLib.generateCraftingRecipe(lastMessage, selectedEdition);
+                }
+            } catch (e) {
+                console.error("Recipe generation failed:", e);
+            }
+            return null;
+        })();
 
-        if (shouldFetchRecipe) {
-            console.log("LLM Router detected recipe request for:", lastMessage);
-            recipePromise = geminiLib.generateCraftingRecipe(lastMessage, selectedEdition);
-        }
+        // Start streaming response
+        const streamResponse = await generateChatStream(history, lastMessage, selectedEdition);
 
-        const [response, recipeResponse] = await Promise.all([responsePromise, recipePromise]);
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+            async start(controller) {
+                const sendEvent = (data: Record<string, any>) => {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+                };
 
-        const candidate = response.candidates?.[0];
-        const text = candidate?.content?.parts?.[0]?.text || '';
-        const groundingMetadata = candidate?.groundingMetadata;
+                try {
+                    let groundingMetadata: any = undefined;
 
-        // Check for function calls (tools) from the RECIPE response
-        let craftingRecipe: any = undefined;
+                    // Stream text chunks from Gemini
+                    for await (const chunk of streamResponse) {
+                        const candidate = chunk.candidates?.[0];
+                        const text = candidate?.content?.parts?.[0]?.text;
 
-        if (recipeResponse) {
-            const functionCalls = recipeResponse.functionCalls;
-            if (functionCalls && functionCalls.length > 0) {
-                const recipeCall = functionCalls.find((fc: any) => fc.name === 'display_crafting_recipe');
-                if (recipeCall) {
-                    craftingRecipe = recipeCall.args;
+                        if (text) {
+                            sendEvent({ type: 'text', content: text });
+                        }
+
+                        // Capture grounding metadata from the last chunk that has it
+                        if (candidate?.groundingMetadata) {
+                            groundingMetadata = candidate.groundingMetadata;
+                        }
+                    }
+
+                    // Send grounding metadata if available
+                    if (groundingMetadata) {
+                        sendEvent({ type: 'metadata', groundingMetadata });
+                    }
+
+                    // Wait for recipe and send if available
+                    const recipeResponse = await recipePromise;
+                    if (recipeResponse) {
+                        const functionCalls = recipeResponse.functionCalls;
+                        if (functionCalls && functionCalls.length > 0) {
+                            const recipeCall = functionCalls.find((fc: any) => fc.name === 'display_crafting_recipe');
+                            if (recipeCall) {
+                                sendEvent({ type: 'recipe', craftingRecipe: recipeCall.args });
+                            }
+                        }
+                    }
+
+                    sendEvent({ type: 'done' });
+                } catch (error: any) {
+                    console.error('Stream error:', error);
+                    sendEvent({ type: 'error', message: error.message });
+                } finally {
+                    controller.close();
                 }
             }
-        }
+        });
 
-        return new Response(JSON.stringify({
-            text,
-            groundingMetadata,
-            craftingRecipe
-        }), {
-            headers: { 'Content-Type': 'application/json' }
+        return new Response(stream, {
+            headers: {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+            }
         });
 
     } catch (error: any) {

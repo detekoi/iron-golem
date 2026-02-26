@@ -67,8 +67,8 @@ export default function Home() {
     if (messages.length < 2) return;
 
     const lastMessage = messages[messages.length - 1];
-    // Only generate if the last message is from the model (AI has responded)
-    if (lastMessage.role === 'model') {
+    // Only generate if the last message is from the model AND done streaming
+    if (lastMessage.role === 'model' && !lastMessage.isStreaming) {
       generateSummary();
     }
   }, [messages]);
@@ -94,6 +94,9 @@ export default function Home() {
   // Auto-save effect
   useEffect(() => {
     if (!currentSessionId) return;
+    // Don't auto-save while streaming
+    const isStreaming = messages.some(m => m.isStreaming);
+    if (isStreaming) return;
 
     const handleAutoSave = async () => {
       let nameToSave = sessionName;
