@@ -21,13 +21,16 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
     const [isLoading, setIsLoading] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const pendingScrollIdx = useRef<number | null>(null);
-    const hasScrolledInitial = useRef(false);
+    const prevFirstMsgTimestamp = useRef<string | null>(null);
 
-    // On initial load / page refresh, scroll to bottom of conversation
+    // On chat load / switch, scroll to bottom of conversation
     useEffect(() => {
-        if (messages.length > 0 && !hasScrolledInitial.current && scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-            hasScrolledInitial.current = true;
+        if (messages.length > 0 && scrollContainerRef.current) {
+            const firstMsgTs = messages[0]?.timestamp ?? null;
+            if (firstMsgTs !== prevFirstMsgTimestamp.current) {
+                scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+                prevFirstMsgTimestamp.current = firstMsgTs;
+            }
         }
     }, [messages]);
 
