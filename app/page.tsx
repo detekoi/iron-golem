@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Pickaxe, Coffee, Box } from 'lucide-react';
 import ChatInterface from '@/components/ChatInterface';
 import SummarySidebar from '@/components/SummarySidebar';
@@ -16,6 +16,8 @@ export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [edition, setEditionState] = useState<MinecraftEdition>('java');
+  // Skip auto-save when we're just hydrating from storage (no actual changes)
+  const isLoadingSession = useRef(false);
 
   const handleSetEdition = (ed: MinecraftEdition) => {
     setEditionState(ed);
@@ -29,6 +31,7 @@ export default function Home() {
     if (activeId) {
       const session = StorageService.getSession(activeId);
       if (session) {
+        isLoadingSession.current = true;
         setCurrentSessionId(session.id);
         setMessages(session.messages);
         setSummary(session.summary);
@@ -55,6 +58,7 @@ export default function Home() {
   };
 
   const loadSession = (session: ChatSession) => {
+    isLoadingSession.current = true;
     setCurrentSessionId(session.id);
     setMessages(session.messages);
     setSummary(session.summary);
@@ -64,6 +68,7 @@ export default function Home() {
 
   // Automatic Summary Generation
   useEffect(() => {
+    if (isLoadingSession.current) return; // Skip on session load/switch
     if (messages.length < 2) return;
 
     const lastMessage = messages[messages.length - 1];
@@ -97,6 +102,14 @@ export default function Home() {
     // Don't auto-save while streaming
     const isStreaming = messages.some(m => m.isStreaming);
     if (isStreaming) return;
+
+    // Skip save when we just loaded/hydrated a session from storage
+    if (isLoadingSession.current) {
+
+      // Defer reset so all effects in this render cycle see the flag
+      queueMicrotask(() => { isLoadingSession.current = false; });
+      return;
+    }
 
     const handleAutoSave = async () => {
       let nameToSave = sessionName;
