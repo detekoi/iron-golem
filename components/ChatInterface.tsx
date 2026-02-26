@@ -137,7 +137,31 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                             msg.role === 'user' ? "bg-blue-600 text-white rounded-tr-none" : "bg-zinc-800 text-gray-100 rounded-tl-none"
                         )}>
                             <div className="[&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-2 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:font-bold [&>h3]:mb-1 [&>p]:mb-3 [&>strong]:font-bold [&>a]:text-blue-400 [&>a]:underline [&>blockquote]:border-l-4 [&>blockquote]:border-zinc-500 [&>blockquote]:pl-4 [&>blockquote]:italic">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                        table: ({ children }) => (
+                                            <div className="my-3 rounded-lg border border-zinc-600/50">
+                                                <table className="text-sm border-collapse">{children}</table>
+                                            </div>
+                                        ),
+                                        thead: ({ children }) => (
+                                            <thead className="bg-emerald-900/40 text-emerald-300 text-xs uppercase tracking-wider">{children}</thead>
+                                        ),
+                                        tbody: ({ children }) => (
+                                            <tbody className="divide-y divide-zinc-700/50">{children}</tbody>
+                                        ),
+                                        tr: ({ children }) => (
+                                            <tr className="hover:bg-white/5 transition-colors even:bg-white/[0.02]">{children}</tr>
+                                        ),
+                                        th: ({ children }) => (
+                                            <th className="px-3 py-2 text-left font-semibold">{children}</th>
+                                        ),
+                                        td: ({ children }) => (
+                                            <td className="px-3 py-2">{children}</td>
+                                        ),
+                                    }}
+                                >
                                     {msg.parts[0].text}
                                 </ReactMarkdown>
                             </div>
