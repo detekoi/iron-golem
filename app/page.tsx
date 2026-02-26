@@ -163,7 +163,7 @@ export default function Home() {
           </div>
           <div>
             <h1 className="text-lg font-bold bg-gradient-to-r from-gray-100 to-gray-300 text-transparent bg-clip-text">
-              Minecraft Helper
+              Iron Golem: Minecraft Helper
             </h1>
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>

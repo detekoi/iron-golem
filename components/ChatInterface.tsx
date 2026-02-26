@@ -186,7 +186,7 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                 {messages.length === 0 && (
                     <div className="text-center text-gray-500 mt-20">
                         <Bot className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                        <h2 className="text-xl font-semibold">Minecraft AI Helper</h2>
+                        <h2 className="text-xl font-semibold">Iron Golem</h2>
                         <p className="mt-2">Ask anything about crafting, updates, or strategies!</p>
                     </div>
                 )}
