@@ -181,8 +181,8 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
     };
 
     return (
-        <div className="flex flex-col h-full max-w-4xl mx-auto p-4">
-            <div className="flex-1 overflow-y-auto mb-4 space-y-4 p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+        <div className="flex flex-col h-full max-w-4xl mx-auto p-2 md:p-4">
+            <div className="flex-1 overflow-y-auto mb-2 md:mb-4 space-y-3 md:space-y-4 p-2 md:p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
                 {messages.length === 0 && (
                     <div className="text-center text-gray-500 mt-20">
                         <Bot className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -193,7 +193,7 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
 
                 {messages.map((msg, idx) => (
                     <div key={idx} id={`message-${idx}`} className={clsx(
-                        "flex gap-3 max-w-[80%] scroll-mt-8",
+                        "flex gap-2 md:gap-3 max-w-[95%] md:max-w-[80%] scroll-mt-8",
                         msg.role === 'user' ? "ml-auto flex-row-reverse" : "mr-auto"
                     )}>
                         <div className={clsx(
@@ -289,7 +289,7 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="How do I craft an Iron Sword?"
-                    className="w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl py-4 pl-4 pr-12 focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder-zinc-500"
+                    className="w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl py-3 md:py-4 pl-3 md:pl-4 pr-12 focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder-zinc-500 text-sm md:text-base"
                     disabled={isLoading}
                 />
                 <button

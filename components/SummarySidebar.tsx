@@ -113,7 +113,7 @@ export default function SessionSidebar({
     };
 
     return (
-        <div className="w-80 border-l border-white/10 bg-zinc-900/50 flex flex-col h-full overflow-hidden shrink-0">
+        <div className="w-full md:w-80 border-l border-white/10 bg-zinc-900/50 flex flex-col h-full overflow-hidden shrink-0">
 
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
 
