@@ -141,7 +141,7 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                                     remarkPlugins={[remarkGfm]}
                                     components={{
                                         table: ({ children }) => (
-                                            <div className="my-3 rounded-lg border border-zinc-600/50">
+                                            <div className="my-3 w-fit rounded-lg border border-zinc-600/50">
                                                 <table className="text-sm border-collapse">{children}</table>
                                             </div>
                                         ),
