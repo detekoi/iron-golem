@@ -17,54 +17,9 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ messages, setMessages, summary, edition }: ChatInterfaceProps) {
-    // const [messages, setMessages] = useState<ChatMessage[]>([]); // Lifted up
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const prevMessagesLength = useRef(0);
 
-    const scrollToBottom = (instant?: boolean) => {
-        messagesEndRef.current?.scrollIntoView({ behavior: instant ? "instant" : "smooth" });
-    };
-
-    // Auto-scroll during streaming
-    useEffect(() => {
-        const lastMsg = messages[messages.length - 1];
-        if (lastMsg?.isStreaming) {
-            scrollToBottom(true);
-        }
-    }, [messages]);
-
-    useEffect(() => {
-        // Initial load or massive change (history reload)
-        if (messages.length > 0 && prevMessagesLength.current === 0) {
-            scrollToBottom();
-        }
-        // Single message added
-        else if (messages.length > prevMessagesLength.current) {
-            const lastMessage = messages[messages.length - 1];
-
-            if (lastMessage.role === 'user') {
-                // For user messages, just ensure they are visible at bottom
-                scrollToBottom();
-            }
-            else if (lastMessage.role === 'model') {
-                // When AI replies, snap the PREVIOUS message (User's question) to the top
-                const userMsgIndex = messages.length - 2;
-                if (userMsgIndex >= 0) {
-                    setTimeout(() => {
-                        const msgId = `message-${userMsgIndex}`;
-                        const el = document.getElementById(msgId);
-                        if (el) {
-                            el.scrollIntoView({ behavior: "smooth", block: "start" });
-                        }
-                    }, 100);
-                }
-            }
-        }
-
-        prevMessagesLength.current = messages.length;
-    }, [messages]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -180,6 +135,48 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
         }
     };
 
+    // Collapsible wrapper for long user messages
+    const CollapsibleMessage = ({ children }: { children: React.ReactNode }) => {
+        const contentRef = useRef<HTMLDivElement>(null);
+        const [isExpanded, setIsExpanded] = useState(false);
+        const [needsCollapse, setNeedsCollapse] = useState(false);
+        const COLLAPSED_HEIGHT = 120; // ~5 lines at 14px text + leading-relaxed
+
+        useEffect(() => {
+            if (contentRef.current) {
+                const height = contentRef.current.scrollHeight;
+                setNeedsCollapse(height > COLLAPSED_HEIGHT + 40);
+            }
+        }, [children]);
+
+        const isCollapsed = needsCollapse && !isExpanded;
+
+        return (
+            <div className="relative">
+                <div
+                    ref={contentRef}
+                    style={isCollapsed ? { maxHeight: `${COLLAPSED_HEIGHT}px`, overflow: 'hidden' } : undefined}
+                >
+                    {children}
+                </div>
+                {isCollapsed && (
+                    <div
+                        className="absolute bottom-0 left-0 right-0 h-12 pointer-events-none"
+                        style={{ background: 'linear-gradient(to bottom, transparent, rgb(37 99 235))' }}
+                    />
+                )}
+                {needsCollapse && (
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="mt-1 text-xs text-blue-200 hover:text-white transition-colors cursor-pointer"
+                    >
+                        {isExpanded ? 'Show less ▲' : 'Show more ▼'}
+                    </button>
+                )}
+            </div>
+        );
+    };
+
     return (
         <div className="flex flex-col h-full max-w-4xl mx-auto p-2 md:p-4">
             <div className="flex-1 overflow-y-auto mb-2 md:mb-4 space-y-3 md:space-y-4 p-2 md:p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
@@ -207,38 +204,44 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                             "p-3 rounded-2xl text-sm leading-relaxed",
                             msg.role === 'user' ? "bg-blue-600 text-white rounded-tr-none" : "bg-zinc-800 text-gray-100 rounded-tl-none"
                         )}>
-                            <div className="[&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-2 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:font-bold [&>h3]:mb-1 [&>p]:mb-3 [&>p:last-child]:mb-0 [&>strong]:font-bold [&>a]:text-blue-400 [&>a]:underline [&>blockquote]:border-l-4 [&>blockquote]:border-zinc-500 [&>blockquote]:pl-4 [&>blockquote]:italic">
-                                <ReactMarkdown
-                                    remarkPlugins={[remarkGfm]}
-                                    components={{
-                                        table: ({ children }) => (
-                                            <div className="my-3 w-fit rounded-lg border border-zinc-600/50">
-                                                <table className="text-sm border-collapse">{children}</table>
-                                            </div>
-                                        ),
-                                        thead: ({ children }) => (
-                                            <thead className="bg-emerald-900/40 text-emerald-300 text-xs uppercase tracking-wider">{children}</thead>
-                                        ),
-                                        tbody: ({ children }) => (
-                                            <tbody className="divide-y divide-zinc-700/50">{children}</tbody>
-                                        ),
-                                        tr: ({ children }) => (
-                                            <tr className="hover:bg-white/5 transition-colors even:bg-white/[0.02]">{children}</tr>
-                                        ),
-                                        th: ({ children }) => (
-                                            <th className="px-3 py-2 text-left font-semibold">{children}</th>
-                                        ),
-                                        td: ({ children }) => (
-                                            <td className="px-3 py-2">{children}</td>
-                                        ),
-                                    }}
-                                >
-                                    {msg.parts[0].text}
-                                </ReactMarkdown>
-                                {msg.isStreaming && (
-                                    <span className="inline-block w-2 h-4 ml-0.5 bg-emerald-400 rounded-sm animate-pulse align-middle" />
-                                )}
-                            </div>
+                            {msg.role === 'user' ? (
+                                <CollapsibleMessage>
+                                    <div>{msg.parts[0].text}</div>
+                                </CollapsibleMessage>
+                            ) : (
+                                <div className="[&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-2 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:font-bold [&>h3]:mb-1 [&>p]:mb-3 [&>p:last-child]:mb-0 [&>strong]:font-bold [&>a]:text-blue-400 [&>a]:underline [&>blockquote]:border-l-4 [&>blockquote]:border-zinc-500 [&>blockquote]:pl-4 [&>blockquote]:italic">
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        components={{
+                                            table: ({ children }) => (
+                                                <div className="my-3 w-fit rounded-lg border border-zinc-600/50">
+                                                    <table className="text-sm border-collapse">{children}</table>
+                                                </div>
+                                            ),
+                                            thead: ({ children }) => (
+                                                <thead className="bg-emerald-900/40 text-emerald-300 text-xs uppercase tracking-wider">{children}</thead>
+                                            ),
+                                            tbody: ({ children }) => (
+                                                <tbody className="divide-y divide-zinc-700/50">{children}</tbody>
+                                            ),
+                                            tr: ({ children }) => (
+                                                <tr className="hover:bg-white/5 transition-colors even:bg-white/[0.02]">{children}</tr>
+                                            ),
+                                            th: ({ children }) => (
+                                                <th className="px-3 py-2 text-left font-semibold">{children}</th>
+                                            ),
+                                            td: ({ children }) => (
+                                                <td className="px-3 py-2">{children}</td>
+                                            ),
+                                        }}
+                                    >
+                                        {msg.parts[0].text}
+                                    </ReactMarkdown>
+                                    {msg.isStreaming && (
+                                        <span className="inline-block w-2 h-4 ml-0.5 bg-emerald-400 rounded-sm animate-pulse align-middle" />
+                                    )}
+                                </div>
+                            )}
 
                             {/* Render Crafting Recipe if present */}
                             {msg.craftingRecipe && (
@@ -280,7 +283,6 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                     </div>
                 )}
 
-                <div ref={messagesEndRef} />
             </div>
 
             <form onSubmit={handleSubmit} className="relative">
