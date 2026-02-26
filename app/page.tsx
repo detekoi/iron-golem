@@ -158,8 +158,8 @@ export default function Home() {
     <main className="h-screen bg-zinc-950 text-white flex flex-col overflow-hidden font-sans selection:bg-green-500/30">
       <header className="h-16 px-6 border-b border-white/5 bg-zinc-900/50 backdrop-blur shrink-0 flex items-center justify-between select-none">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-emerald-800 rounded-lg flex items-center justify-center shadow-lg shadow-green-900/20 border border-green-500/20">
-            <Pickaxe className="w-4.5 h-4.5 text-white" />
+          <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-emerald-800 rounded-lg flex items-center justify-center shadow-lg shadow-green-900/20 border border-green-500/20 overflow-hidden">
+            <img src="/icon.png" alt="Iron Golem Logo" className="w-6 h-6 object-contain" />
           </div>
           <div>
             <h1 className="text-lg font-bold bg-gradient-to-r from-gray-100 to-gray-300 text-transparent bg-clip-text">
