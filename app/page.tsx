@@ -123,7 +123,7 @@ export default function Home() {
     };
 
     handleAutoSave();
-  }, [messages, summary, currentSessionId, sessionName]);
+  }, [messages, summary, currentSessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <main className="h-screen bg-zinc-950 text-white flex flex-col overflow-hidden font-sans selection:bg-green-500/30">

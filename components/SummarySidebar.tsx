@@ -35,7 +35,7 @@ export default function SessionSidebar({
     // Initial load and hydration
     useEffect(() => {
         refreshSessions();
-    }, [currentSessionId]); // Refresh when session changes
+    }, [currentSessionId, messages]); // Refresh when session changes or messages update
 
     // Auto-save current session whenever it changes
     useEffect(() => {
