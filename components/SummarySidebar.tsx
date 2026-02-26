@@ -206,10 +206,11 @@ export default function SessionSidebar({
                         </h2>
                         <button
                             onClick={onCreateSession}
-                            className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-white transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all"
                             title="New Session"
                         >
-                            <Plus className="w-4 h-4" />
+                            <Plus className="w-3.5 h-3.5" />
+                            New
                         </button>
                     </div>
 
