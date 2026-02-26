@@ -183,19 +183,21 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
         const isCollapsed = needsCollapse && !isExpanded;
 
         return (
-            <div className="relative">
-                <div
-                    ref={contentRef}
-                    style={isCollapsed ? { maxHeight: `${COLLAPSED_HEIGHT}px`, overflow: 'hidden' } : undefined}
-                >
-                    {children}
-                </div>
-                {isCollapsed && (
+            <div>
+                <div className="relative">
                     <div
-                        className="absolute bottom-0 left-0 right-0 h-12 pointer-events-none"
-                        style={{ background: 'linear-gradient(to bottom, transparent, rgb(37 99 235))' }}
-                    />
-                )}
+                        ref={contentRef}
+                        style={isCollapsed ? { maxHeight: `${COLLAPSED_HEIGHT}px`, overflow: 'hidden' } : undefined}
+                    >
+                        {children}
+                    </div>
+                    {isCollapsed && (
+                        <div
+                            className="absolute bottom-0 left-0 right-0 h-12 pointer-events-none"
+                            style={{ background: 'linear-gradient(to bottom, transparent, rgb(37 99 235))' }}
+                        />
+                    )}
+                </div>
                 {needsCollapse && (
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
