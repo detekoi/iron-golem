@@ -21,6 +21,15 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
     const [isLoading, setIsLoading] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const pendingScrollIdx = useRef<number | null>(null);
+    const hasScrolledInitial = useRef(false);
+
+    // On initial load / page refresh, scroll to bottom of conversation
+    useEffect(() => {
+        if (messages.length > 0 && !hasScrolledInitial.current && scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+            hasScrolledInitial.current = true;
+        }
+    }, [messages]);
 
     // Scroll the user's message to the top whenever messages change and we have a pending target
     useEffect(() => {
