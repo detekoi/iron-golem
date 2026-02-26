@@ -19,6 +19,23 @@ interface ChatInterfaceProps {
 export default function ChatInterface({ messages, setMessages, summary, edition }: ChatInterfaceProps) {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const pendingScrollIdx = useRef<number | null>(null);
+
+    // Scroll the user's message to the top whenever messages change and we have a pending target
+    useEffect(() => {
+        if (pendingScrollIdx.current !== null) {
+            const el = document.getElementById(`message-${pendingScrollIdx.current}`);
+            if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+            // Clear once the AI response has started streaming (model message exists after user)
+            const nextMsg = messages[pendingScrollIdx.current + 1];
+            if (nextMsg && nextMsg.role === 'model' && nextMsg.parts[0]?.text) {
+                pendingScrollIdx.current = null;
+            }
+        }
+    }, [messages]);
 
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -35,6 +52,8 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
         setMessages(allMessages);
         setInput('');
         setIsLoading(true);
+        // Mark this user message for scroll-to-top
+        pendingScrollIdx.current = allMessages.length - 1;
 
         try {
             const response = await fetch('/api/chat', {
@@ -179,7 +198,7 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
 
     return (
         <div className="flex flex-col h-full max-w-4xl mx-auto p-2 md:p-4">
-            <div className="flex-1 overflow-y-auto mb-2 md:mb-4 space-y-3 md:space-y-4 p-2 md:p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto mb-2 md:mb-4 space-y-3 md:space-y-4 p-2 md:p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
                 {messages.length === 0 && (
                     <div className="text-center text-gray-500 mt-20">
                         <Bot className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -281,6 +300,11 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                             <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
                         </div>
                     </div>
+                )}
+
+                {/* Spacer: gives enough room to scroll the user's message to the top */}
+                {messages.length > 0 && messages[messages.length - 1]?.role === 'user' && (
+                    <div style={{ minHeight: '80vh' }} />
                 )}
 
             </div>
