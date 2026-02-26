@@ -5,7 +5,7 @@ import {
     PlayerContextSchema,
     KnowledgeBaseSchema,
     GoalsSchema,
-} from './schemas';
+} from '@/lib/schemas';
 
 // ── Helpers ────────────────────────────────────────────────
 

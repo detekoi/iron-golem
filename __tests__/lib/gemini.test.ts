@@ -5,7 +5,7 @@ import {
     ROUTER_MODEL_ID,
     CRAFTING_TOOL,
     SEARCH_TOOL,
-} from './gemini';
+} from '@/lib/gemini';
 
 // ── getSystemInstruction() ─────────────────────────────────
 

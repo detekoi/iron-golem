@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createLogger, preview } from './logger';
+import { createLogger, preview } from '@/lib/logger';
 
 // ── preview() ──────────────────────────────────────────────
 
