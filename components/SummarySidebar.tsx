@@ -26,6 +26,7 @@ export default function SessionSidebar({
 }: SessionSidebarProps) {
     const [savedSessions, setSavedSessions] = useState<ChatSession[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
 
     // Refresh sessions list
     const refreshSessions = () => {
@@ -55,13 +56,24 @@ export default function SessionSidebar({
 
     const handleDeleteSession = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (confirm('Are you sure you want to delete this chat session?')) {
-            StorageService.deleteSession(id);
+        setDeletingSessionId(id);
+    };
+
+    const confirmDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (deletingSessionId) {
+            StorageService.deleteSession(deletingSessionId);
             refreshSessions();
-            if (currentSessionId === id) {
-                onCreateSession(); // Switch to new if deleted current
+            if (currentSessionId === deletingSessionId) {
+                onCreateSession();
             }
+            setDeletingSessionId(null);
         }
+    };
+
+    const cancelDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setDeletingSessionId(null);
     };
 
     const handleLoadSession = (s: ChatSession) => {
@@ -224,14 +236,14 @@ export default function SessionSidebar({
 
                 <div className="overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-zinc-700">
                     {savedSessions
-                        .filter(s => s.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
+                        .filter(s => (s.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
                         .length === 0 ? (
                         <div className="text-zinc-500 text-xs text-center py-4 italic">
                             {searchQuery ? 'No matching sessions' : 'No saved sessions'}
                         </div>
                     ) : (
                         savedSessions
-                            .filter(s => s.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
+                            .filter(s => (s.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
                             .map((s) => (
                                 <div key={s.id}
                                     onClick={() => onLoadSession(s)}
@@ -249,12 +261,30 @@ export default function SessionSidebar({
                                             <div className="text-[10px] text-zinc-600 truncate">{handleKeyDate(s.lastUpdated)}</div>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={(e) => handleDeleteSession(s.id, e)}
-                                        className="p-1 rounded hover:bg-red-500/20 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <Trash2 className="w-3 h-3" />
-                                    </button>
+                                    {deletingSessionId === s.id ? (
+                                        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                            <span className="text-[10px] text-red-400">Delete?</span>
+                                            <button
+                                                onClick={confirmDelete}
+                                                className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                                            >
+                                                Yes
+                                            </button>
+                                            <button
+                                                onClick={cancelDelete}
+                                                className="px-1.5 py-0.5 rounded text-[10px] bg-zinc-700/50 text-zinc-400 hover:bg-zinc-700 transition-colors"
+                                            >
+                                                No
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={(e) => handleDeleteSession(s.id, e)}
+                                            className="p-1 rounded hover:bg-red-500/20 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                        </button>
+                                    )}
                                 </div>
                             ))
                     )}
