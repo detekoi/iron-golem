@@ -14,10 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Iron Golem - MC Helper",
-```tsx
   description: "AI-powered assistant for Minecraft Java and Bedrock editions.",
 };
-```
 
 export default function RootLayout({
   children,
