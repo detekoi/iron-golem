@@ -3,7 +3,8 @@ import { generateChatResponse } from '@/lib/gemini';
 
 export async function POST(req: NextRequest) {
     try {
-        const { messages, summary } = await req.json();
+        const { messages, summary, edition } = await req.json();
+        const selectedEdition = edition === 'bedrock' ? 'bedrock' : 'java';
 
         // Basic validation
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
 
         // Use non-streaming API
         // PASS 1: Main Chat (Thinking + Search Enabled)
-        const responsePromise = generateChatResponse(history, lastMessage);
+        const responsePromise = generateChatResponse(history, lastMessage, selectedEdition);
 
         // PASS 2: Check if we need a recipe (Parallel execution if router says yes)
         let recipePromise = Promise.resolve<any>(null);
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
 
         if (shouldFetchRecipe) {
             console.log("LLM Router detected recipe request for:", lastMessage);
-            recipePromise = geminiLib.generateCraftingRecipe(lastMessage);
+            recipePromise = geminiLib.generateCraftingRecipe(lastMessage, selectedEdition);
         }
 
         const [response, recipeResponse] = await Promise.all([responsePromise, recipePromise]);

@@ -1,4 +1,5 @@
 import { GoogleGenAI, type Content, type Tool, type GenerateContentConfig, Type, FunctionCallingConfigMode } from '@google/genai';
+import type { MinecraftEdition } from './storage';
 
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -43,8 +44,7 @@ export const CRAFTING_TOOL: Tool = {
 
 export const SEARCH_TOOL: Tool = { googleSearch: {} };
 
-export const SYSTEM_INSTRUCTION = `You are a helpful and knowledgeable Minecraft expert. 
-Your goal is to assist players with crafting recipes, game mechanics, updates, building strategies, and redstone tutorials.
+const SYSTEM_INSTRUCTION_BASE = `You are a helpful and knowledgeable Minecraft expert.
 Always ensure your answers are accurate and relevant to Minecraft.
 
 ### CRITICAL INSTRUCTION: SEARCH GROUNDING
@@ -56,6 +56,16 @@ You must **ALWAYS** use the Google Search tool when answering questions about:
 If a user asks about a topic unrelated to Minecraft (such as general history or other games), politely steer the conversation back to Minecraft or explain that you specialize only in Minecraft.
 Use Markdown to format your responses effectively, using bold text for key terms and lists for steps or items.`;
 
+const EDITION_INSTRUCTIONS: Record<MinecraftEdition, string> = {
+    java: `You are specifically assisting with **Minecraft Java Edition**. Tailor all answers, recipes, mechanics, and version info to Java Edition. If something differs in Bedrock, briefly note the difference.`,
+
+    bedrock: `You are specifically assisting with **Minecraft Bedrock Edition**. Tailor all answers, recipes, mechanics, and version info to Bedrock Edition. If something differs in Java, briefly note the difference.`
+};
+
+export function getSystemInstruction(edition: MinecraftEdition = 'java'): string {
+    return `${SYSTEM_INSTRUCTION_BASE}\n\n${EDITION_INSTRUCTIONS[edition]}`;
+}
+
 export const defaultGenerationConfig: GenerateContentConfig = {
     thinkingConfig: { thinkingLevel: "medium" as any },
     responseMimeType: "text/plain",
@@ -64,6 +74,7 @@ export const defaultGenerationConfig: GenerateContentConfig = {
 export async function generateChatResponse(
     history: Content[],
     lastUserMessage: string,
+    edition: MinecraftEdition = 'java',
     modelId: string = MODEL_ID,
     thinkingLevel: "low" | "medium" | "high" | "minimal" = "medium"
 ) {
@@ -72,7 +83,7 @@ export async function generateChatResponse(
         config: {
             thinkingConfig: { thinkingLevel: thinkingLevel as any },
             tools: [SEARCH_TOOL], // REMOVED CRAFTING_TOOL to avoid conflict
-            systemInstruction: SYSTEM_INSTRUCTION,
+            systemInstruction: getSystemInstruction(edition),
         },
         history,
     });
@@ -83,6 +94,7 @@ export async function generateChatResponse(
 export async function generateChatStream(
     history: Content[],
     lastUserMessage: string,
+    edition: MinecraftEdition = 'java',
     modelId: string = MODEL_ID,
     thinkingLevel: "low" | "medium" | "high" | "minimal" = "medium"
 ) {
@@ -91,7 +103,7 @@ export async function generateChatStream(
         config: {
             thinkingConfig: { thinkingLevel: thinkingLevel as any },
             tools: [SEARCH_TOOL], // REMOVED CRAFTING_TOOL
-            systemInstruction: SYSTEM_INSTRUCTION,
+            systemInstruction: getSystemInstruction(edition),
         },
         history,
     });
@@ -102,19 +114,21 @@ export async function generateChatStream(
 // New dedicated function for recipe generation
 export async function generateCraftingRecipe(
     itemQuery: string,
+    edition: MinecraftEdition = 'java',
     modelId: string = MODEL_ID
 ) {
+    const editionLabel = edition === 'java' ? 'Java Edition' : 'Bedrock Edition';
     const chat = client.chats.create({
         model: modelId,
         config: {
             // No thinking, No search - just tools
             tools: [CRAFTING_TOOL],
             toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY } },
-            systemInstruction: "You are a Minecraft recipe database. Your ONLY job is to output the crafting recipe for the requested item using the display_crafting_recipe tool.",
+            systemInstruction: `You are a Minecraft ${editionLabel} recipe database. Your ONLY job is to output the crafting recipe for the requested item using the display_crafting_recipe tool. Ensure the recipe is accurate for ${editionLabel}.`,
         }
     });
 
-    return chat.sendMessage({ message: `Recipe for: ${itemQuery}` });
+    return chat.sendMessage({ message: `Recipe for (${editionLabel}): ${itemQuery}` });
 }
 
 export const ROUTER_MODEL_ID = "gemini-2.5-flash-lite";

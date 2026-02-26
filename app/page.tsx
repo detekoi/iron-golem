@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { Pickaxe, Coffee, Box } from 'lucide-react';
 import ChatInterface from '@/components/ChatInterface';
 import SummarySidebar from '@/components/SummarySidebar';
 import { ChatMessage, SessionSummary, ChatSession } from '@/lib/types';
 import { StorageService } from '@/lib/storage';
+import type { MinecraftEdition } from '@/lib/storage';
 
 export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -13,6 +15,12 @@ export default function Home() {
   const [sessionName, setSessionName] = useState('New Chat');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [edition, setEditionState] = useState<MinecraftEdition>('java');
+
+  const handleSetEdition = (ed: MinecraftEdition) => {
+    setEditionState(ed);
+    StorageService.setEdition(ed);
+  };
 
   // Load session on mount
   useEffect(() => {
@@ -31,6 +39,11 @@ export default function Home() {
 
     // Fallback to creating a new one if none exists
     createNewSession();
+  }, []);
+
+  // Load edition preference on mount
+  useEffect(() => {
+    setEditionState(StorageService.getEdition());
   }, []);
 
   const createNewSession = () => {
@@ -130,7 +143,7 @@ export default function Home() {
       <header className="h-16 px-6 border-b border-white/5 bg-zinc-900/50 backdrop-blur shrink-0 flex items-center justify-between select-none">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-emerald-800 rounded-lg flex items-center justify-center shadow-lg shadow-green-900/20 border border-green-500/20">
-            <span className="text-lg">⛏️</span>
+            <Pickaxe className="w-4.5 h-4.5 text-white" />
           </div>
           <div>
             <h1 className="text-lg font-bold bg-gradient-to-r from-gray-100 to-gray-300 text-transparent bg-clip-text">
@@ -143,6 +156,30 @@ export default function Home() {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Edition Toggle */}
+        <div className="flex items-center gap-1 bg-zinc-800/80 rounded-lg p-1 border border-white/5">
+          <button
+            onClick={() => handleSetEdition('java')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${edition === 'java'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/30'
+              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50'
+              }`}
+          >
+            <Coffee className="w-3.5 h-3.5" />
+            Java
+          </button>
+          <button
+            onClick={() => handleSetEdition('bedrock')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${edition === 'bedrock'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/30'
+              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50'
+              }`}
+          >
+            <Box className="w-3.5 h-3.5" />
+            Bedrock
+          </button>
         </div>
 
         <button
@@ -163,7 +200,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
 
         <div className="flex-1 min-w-0 z-10">
-          <ChatInterface messages={messages} setMessages={setMessages} summary={summary} />
+          <ChatInterface messages={messages} setMessages={setMessages} summary={summary} edition={edition} />
         </div>
 
         <div className={`z-20 h-full border-l border-white/5 bg-zinc-900/80 backdrop-blur-xl shadow-2xl transition-all duration-300 ease-in-out overflow-hidden ${isSidebarOpen ? 'w-80 opacity-100' : 'w-0 opacity-0 border-none'}`}>

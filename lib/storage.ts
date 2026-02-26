@@ -1,8 +1,11 @@
 import { ChatSession } from './types';
 
+export type MinecraftEdition = 'java' | 'bedrock';
+
 const STORAGE_KEYS = {
     SESSIONS: 'mc_guide_chat_sessions',
     ACTIVE_SESSION_ID: 'mc_guide_active_session_id',
+    EDITION: 'mc_guide_edition',
 };
 
 export const StorageService = {
@@ -96,5 +99,16 @@ export const StorageService = {
     clearActiveSessionId: () => {
         if (typeof window === 'undefined') return;
         localStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION_ID);
+    },
+
+    // Edition preference
+    getEdition: (): MinecraftEdition => {
+        if (typeof window === 'undefined') return 'java';
+        return (localStorage.getItem(STORAGE_KEYS.EDITION) as MinecraftEdition) || 'java';
+    },
+
+    setEdition: (edition: MinecraftEdition) => {
+        if (typeof window === 'undefined') return;
+        localStorage.setItem(STORAGE_KEYS.EDITION, edition);
     }
 };

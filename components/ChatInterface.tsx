@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { ChatMessage, SessionSummary } from '@/lib/types';
+import type { MinecraftEdition } from '@/lib/storage';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -12,9 +13,10 @@ interface ChatInterfaceProps {
     messages: ChatMessage[];
     setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
     summary: SessionSummary | null;
+    edition: MinecraftEdition;
 }
 
-export default function ChatInterface({ messages, setMessages, summary }: ChatInterfaceProps) {
+export default function ChatInterface({ messages, setMessages, summary, edition }: ChatInterfaceProps) {
     // const [messages, setMessages] = useState<ChatMessage[]>([]); // Lifted up
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -76,7 +78,8 @@ export default function ChatInterface({ messages, setMessages, summary }: ChatIn
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     messages: [...messages, userMessage],
-                    summary // Pass current summary context
+                    summary, // Pass current summary context
+                    edition  // Pass selected edition
                 })
             });
 
