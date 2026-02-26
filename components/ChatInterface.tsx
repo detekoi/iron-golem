@@ -302,8 +302,8 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
                     </div>
                 )}
 
-                {/* Spacer: gives enough room to scroll the user's message to the top */}
-                {messages.length > 0 && messages[messages.length - 1]?.role === 'user' && (
+                {/* Spacer: gives room to scroll user message to top while AI is responding */}
+                {isLoading && (
                     <div style={{ minHeight: '80vh' }} />
                 )}
 
