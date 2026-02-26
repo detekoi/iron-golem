@@ -1,17 +1,29 @@
 import { NextRequest } from 'next/server';
 import { generateChatStream } from '@/lib/gemini';
+import { createLogger, preview } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
+    const log = createLogger('chat');
+    const timer = log.startTimer();
+
     try {
         const { messages, summary, edition } = await req.json();
         const selectedEdition = edition === 'bedrock' ? 'bedrock' : 'java';
 
         // Basic validation
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
+            log.warn('Invalid request body', { hasMessages: !!messages });
             return new Response('Invalid request body', { status: 400 });
         }
 
         const lastMessage = messages[messages.length - 1].parts[0].text;
+        log.info('Chat request received', {
+            edition: selectedEdition,
+            messageCount: messages.length,
+            query: preview(lastMessage),
+            hasSummary: !!summary,
+        });
+
         let history = messages.slice(0, -1).map((m: any) => ({
             role: m.role,
             parts: m.parts
@@ -33,11 +45,13 @@ export async function POST(req: NextRequest) {
             try {
                 const shouldFetchRecipe = await geminiLib.isCraftingQuery(lastMessage);
                 if (shouldFetchRecipe) {
-                    console.log("LLM Router detected recipe request for:", lastMessage);
+                    log.info('Recipe request detected', { query: preview(lastMessage) });
                     return geminiLib.generateCraftingRecipe(lastMessage, selectedEdition);
                 }
             } catch (e) {
-                console.error("Recipe generation failed:", e);
+                log.error('Recipe generation failed', {
+                    error: e instanceof Error ? e.message : String(e),
+                });
             }
             return null;
         })();
@@ -54,6 +68,8 @@ export async function POST(req: NextRequest) {
 
                 try {
                     let groundingMetadata: any = undefined;
+                    let chunkCount = 0;
+                    let responseText = '';
 
                     // Stream text chunks from Gemini
                     for await (const chunk of streamResponse) {
@@ -62,6 +78,8 @@ export async function POST(req: NextRequest) {
 
                         if (text) {
                             sendEvent({ type: 'text', content: text });
+                            responseText += text;
+                            chunkCount++;
                         }
 
                         // Capture grounding metadata from the last chunk that has it
@@ -77,19 +95,30 @@ export async function POST(req: NextRequest) {
 
                     // Wait for recipe and send if available
                     const recipeResponse = await recipePromise;
+                    let hasRecipe = false;
                     if (recipeResponse) {
                         const functionCalls = recipeResponse.functionCalls;
                         if (functionCalls && functionCalls.length > 0) {
                             const recipeCall = functionCalls.find((fc: any) => fc.name === 'display_crafting_recipe');
                             if (recipeCall) {
                                 sendEvent({ type: 'recipe', craftingRecipe: recipeCall.args });
+                                hasRecipe = true;
                             }
                         }
                     }
 
                     sendEvent({ type: 'done' });
+                    timer.done('Chat exchange completed', {
+                        edition: selectedEdition,
+                        userMessage: preview(lastMessage),
+                        aiResponse: preview(responseText, 150),
+                        responseLength: responseText.length,
+                        chunkCount,
+                        hasRecipe,
+                        hasGrounding: !!groundingMetadata,
+                    });
                 } catch (error: any) {
-                    console.error('Stream error:', error);
+                    log.error('Stream error', { error: error.message });
                     sendEvent({ type: 'error', message: error.message });
                 } finally {
                     controller.close();
@@ -106,10 +135,9 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error: any) {
-        console.error('API Error Details:', {
-            message: error.message,
+        log.error('Chat API error', {
+            error: error.message,
             stack: error.stack,
-            response: error.response ? await error.response.text() : undefined
         });
         return new Response(`Internal Server Error: ${error.message}`, { status: 500 });
     }

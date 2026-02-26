@@ -1,14 +1,21 @@
 import { NextRequest } from 'next/server';
 import { client, MODEL_ID } from '@/lib/gemini';
 import { SessionSummarySchema } from '@/lib/schemas';
+import { createLogger } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
+    const log = createLogger('summary');
+    const timer = log.startTimer();
+
     try {
         const { messages } = await req.json();
 
         if (!messages || messages.length === 0) {
+            log.warn('No messages to summarize');
             return new Response('No messages to summarize', { status: 400 });
         }
+
+        log.info('Summary request received', { messageCount: messages.length });
 
         // Create a simplified JSON schema for Gemini to follow
         const jsonSchema = {
@@ -98,8 +105,7 @@ For resources:
 
 Provide detailed information. Extract as much as you can from the conversation.`;
 
-        console.log('[Summary API] Calling Gemini with prompt length:', prompt.length);
-        console.log('[Summary API] JSON Schema:', JSON.stringify(jsonSchema, null, 2));
+        log.info('Calling Gemini', { promptLength: prompt.length });
 
         const result = await client.models.generateContent({
             model: MODEL_ID,
@@ -113,11 +119,10 @@ Provide detailed information. Extract as much as you can from the conversation.`
         });
 
         const outputText = result.text || "{}";
-        console.log('[Summary API] Raw Gemini response:', outputText);
+        log.info('Gemini response received', { responseLength: outputText.length });
 
         // Parse and validate the response
         const parsedData = JSON.parse(outputText);
-        console.log('[Summary API] Parsed data:', JSON.stringify(parsedData, null, 2));
 
         // Provide defaults for missing fields
         const dataWithDefaults = {
@@ -140,8 +145,14 @@ Provide detailed information. Extract as much as you can from the conversation.`
         const validationResult = SessionSummarySchema.safeParse(dataWithDefaults);
 
         if (!validationResult.success) {
-            console.error('[Summary API] Validation failed:', validationResult.error);
-            console.error('[Summary API] Failed data:', JSON.stringify(dataWithDefaults, null, 2));
+            const errorCount = validationResult.error.issues.length;
+            log.error('Validation failed', {
+                errorCount,
+                issues: validationResult.error.issues.map(i => ({
+                    path: i.path.join('.'),
+                    message: i.message,
+                })),
+            });
             // Return a minimal valid summary if validation fails
             const fallbackSummary = {
                 summaryVersion: '1.0' as const,
@@ -162,16 +173,20 @@ Provide detailed information. Extract as much as you can from the conversation.`
             });
         }
 
-        console.log('[Summary API] Validation successful');
+        timer.done('Summary generated successfully', {
+            projectCount: validationResult.data.currentProjects.length,
+            hasResources: !!validationResult.data.resources,
+        });
+
         return new Response(JSON.stringify(validationResult.data), {
             headers: { 'Content-Type': 'application/json' }
         });
 
     } catch (error) {
-        console.error('[Summary API] Error:', error);
-        if (error instanceof Error) {
-            console.error('[Summary API] Error stack:', error.stack);
-        }
+        log.error('Summary API error', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        });
         return new Response('Internal Server Error', { status: 500 });
     }
 }

@@ -1,13 +1,20 @@
 import { NextRequest } from 'next/server';
 import { client, MODEL_ID } from '@/lib/gemini';
+import { createLogger } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
+    const log = createLogger('generate-title');
+    const timer = log.startTimer();
+
     try {
         const { messages } = await req.json();
 
         if (!messages || !Array.isArray(messages)) {
+            log.warn('Invalid request body');
             return new Response('Invalid request body', { status: 400 });
         }
+
+        log.info('Title generation requested', { messageCount: messages.length });
 
         // Limit context to first few messages for title generation to save tokens
         const titleContext = messages.slice(0, 4).map((m: any) => ({
@@ -34,12 +41,17 @@ export async function POST(req: NextRequest) {
 
         const title = titleContent ? titleContent.trim().replace(/^["']|["']$/g, '') : "New Chat";
 
+        timer.done('Title generated', { title });
+
         return new Response(JSON.stringify({ title }), {
             headers: { 'Content-Type': 'application/json' }
         });
 
     } catch (error: any) {
-        console.error('Title Generation Error:', error);
+        log.error('Title generation failed', {
+            error: error.message,
+            stack: error.stack,
+        });
         return new Response(JSON.stringify({ error: error.message, stack: error.stack }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
