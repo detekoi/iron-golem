@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ⛏️ Iron Golem — MC Helper
+
+Your AI-powered Minecraft companion. Get instant answers, crafting recipes, and expert tips for Java and Bedrock editions — powered by Google Gemini.
+
+## Features
+
+- **AI Chat** — Ask anything about Minecraft and get accurate, grounded answers via Gemini 3 Flash with Google Search integration
+- **Visual Crafting Recipes** — Automatically detects recipe questions and renders interactive 3×3 crafting grids
+- **Java / Bedrock Toggle** — Switch editions and get edition-specific answers, recipes, and mechanics
+- **Session Management** — Conversations are saved to local storage with auto-generated titles
+- **Session Summaries** — AI-generated summaries of each conversation, updated in real time
+- **Streaming Responses** — Answers stream in token-by-token for a responsive experience
+- **Dark Theme** — A polished, dark UI designed for long sessions
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | [Next.js 16](https://nextjs.org/) (App Router) |
+| UI | [React 19](https://react.dev/), [Lucide Icons](https://lucide.dev/) |
+| Styling | [Tailwind CSS 4](https://tailwindcss.com/) |
+| AI | [Google Gemini API](https://ai.google.dev/) (`@google/genai`) |
+| Markdown | `react-markdown`, `remark-gfm`, `rehype-raw` |
+| Validation | [Zod 4](https://zod.dev/) |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) 20+
+- A [Google AI Studio](https://aistudio.google.com/) API key
+
+### Setup
 
 ```bash
+# Clone the repo
+git clone https://github.com/your-username/mc-guide.git
+cd mc-guide
+
+# Install dependencies
+npm install
+
+# Add your API key
+echo "GEMINI_API_KEY=your_key_here" > .env
+
+# Start the dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) and start asking questions!
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+mc-guide/
+├── app/
+│   ├── api/
+│   │   ├── chat/          # Streaming chat endpoint
+│   │   ├── generate-title/ # Auto-generates session titles
+│   │   └── summary/       # Session summary generation
+│   ├── layout.tsx         # Root layout & metadata
+│   ├── page.tsx           # Main app page
+│   └── globals.css        # Global styles
+├── components/
+│   ├── ChatInterface.tsx  # Chat UI with message rendering
+│   ├── CraftingRecipe.tsx # Visual 3×3 crafting grid
+│   └── SummarySidebar.tsx # Session list & summary panel
+├── lib/
+│   ├── gemini.ts          # Gemini client, tools, & prompts
+│   ├── schemas.ts         # Zod validation schemas
+│   ├── storage.ts         # LocalStorage session persistence
+│   └── types.ts           # Shared TypeScript types
+└── public/                # Static assets (item textures, etc.)
+```
 
-## Learn More
+## License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[BSD 2-Clause](LICENSE) © Henry Manes
