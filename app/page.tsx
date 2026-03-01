@@ -9,6 +9,7 @@ import { StorageService } from '@/lib/storage';
 import type { MinecraftEdition } from '@/lib/storage';
 
 export default function Home() {
+  const [isReady, setIsReady] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -25,9 +26,10 @@ export default function Home() {
     StorageService.setEdition(ed);
   };
 
-  // Load session on mount
+  // Hydrate all client-side state in a single pass to avoid flickering
   useEffect(() => {
-    // Check for active session ID
+    setEditionState(StorageService.getEdition());
+
     const activeId = StorageService.getActiveSessionId();
     if (activeId) {
       const session = StorageService.getSession(activeId);
@@ -37,17 +39,14 @@ export default function Home() {
         setMessages(session.messages);
         setSummary(session.summary);
         setSessionName(session.name);
+        setIsReady(true);
         return;
       }
     }
 
     // Fallback to creating a new one if none exists
     createNewSession();
-  }, []);
-
-  // Load edition preference on mount
-  useEffect(() => {
-    setEditionState(StorageService.getEdition());
+    setIsReady(true);
   }, []);
 
   // Track viewport width for responsive sidebar behavior
@@ -167,6 +166,10 @@ export default function Home() {
 
     handleAutoSave();
   }, [messages, summary, currentSessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!isReady) {
+    return <main className="h-screen-safe bg-zinc-950" />;
+  }
 
   return (
     <main className="h-screen-safe bg-zinc-950 text-white flex flex-col overflow-hidden font-sans selection:bg-green-500/30">
