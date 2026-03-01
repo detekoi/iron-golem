@@ -9,8 +9,6 @@ Your AI-powered Minecraft companion. Get instant answers, crafting recipes, and 
 - **Java / Bedrock Toggle** — Switch editions and get edition-specific answers, recipes, and mechanics
 - **Session Management** — Conversations are saved to local storage with auto-generated titles
 - **Session Summaries** — AI-generated summaries of each conversation, updated in real time
-- **Streaming Responses** — Answers stream in token-by-token for a responsive experience
-- **Dark Theme** — A polished, dark UI designed for long sessions
 
 ## Tech Stack
 
