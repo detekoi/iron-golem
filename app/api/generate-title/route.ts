@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
             error: error.message,
             stack: error.stack,
         });
-        return new Response(JSON.stringify({ error: error.message, stack: error.stack }), {
+        return new Response(JSON.stringify({ error: 'An internal error occurred' }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
