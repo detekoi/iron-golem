@@ -214,7 +214,7 @@ export default function ChatInterface({ messages, setMessages, summary, edition 
 
     return (
         <div className="flex flex-col h-full max-w-4xl mx-auto p-2 md:p-4">
-            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto mb-2 md:mb-4 space-y-3 md:space-y-4 p-2 md:p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto mb-2 md:mb-4 space-y-3 md:space-y-4 p-2 md:p-4 rounded-lg bg-zinc-900/60 border border-white/10">
                 {messages.length === 0 && (
                     <div className="text-center text-gray-500 mt-20">
                         <Bot className="w-16 h-16 mx-auto mb-4 opacity-50" />

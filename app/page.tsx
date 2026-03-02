@@ -173,7 +173,7 @@ export default function Home() {
 
   return (
     <main className="h-screen-safe bg-zinc-950 text-white flex flex-col overflow-hidden font-sans selection:bg-green-500/30">
-      <header className="min-h-14 md:h-16 px-3 md:px-6 border-b border-white/5 bg-zinc-900/50 backdrop-blur shrink-0 flex items-center justify-between select-none gap-2 py-2">
+      <header className="min-h-14 md:h-16 px-3 md:px-6 border-b border-white/5 bg-zinc-900 shrink-0 flex items-center justify-between select-none gap-2 py-2">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <div className="w-7 h-7 md:w-8 md:h-8 bg-gradient-to-br from-green-600 to-emerald-800 rounded-lg flex items-center justify-center shadow-lg shadow-green-900/20 border border-green-500/20 overflow-hidden shrink-0">
             <img src="/icon.png" alt="Iron Golem Logo" className="w-5 h-5 md:w-6 md:h-6 object-contain" />
@@ -240,7 +240,7 @@ export default function Home() {
 
       <div className="flex-1 flex overflow-hidden relative">
         {/* Background Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none will-change-transform"></div>
 
         <div className="flex-1 min-w-0 z-10">
           <ChatInterface messages={messages} setMessages={setMessages} summary={summary} edition={edition} />
@@ -260,7 +260,7 @@ export default function Home() {
             ? `fixed inset-y-0 right-0 z-40 w-[85vw] max-w-sm transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`
             : `z-20 h-full transition-all duration-300 ease-in-out overflow-hidden ${isSidebarOpen ? 'w-80 opacity-100' : 'w-0 opacity-0 border-none'}`
           }
-          border-l border-white/5 bg-zinc-900/95 md:bg-zinc-900/80 backdrop-blur-xl shadow-2xl
+          border-l border-white/5 bg-zinc-900 shadow-2xl
         `}>
           <div className={`${isMobile ? 'w-full' : 'w-80'} h-full`}>
             <SummarySidebar
