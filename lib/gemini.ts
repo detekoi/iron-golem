@@ -44,12 +44,16 @@ export const CRAFTING_TOOL: Tool = {
 
 export const SEARCH_TOOL: Tool = { googleSearch: {} };
 
+const currentDate = new Date();
+const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' });
+const currentYear = currentDate.getFullYear();
+
 const SYSTEM_INSTRUCTION_BASE = `You are a helpful and knowledgeable Minecraft expert.
 Always ensure your answers are accurate and relevant to Minecraft.
 
 ### CRITICAL INSTRUCTION: SEARCH GROUNDING
 You must **ALWAYS** use the Google Search tool when answering questions about:
-1.  **New Features & Updates**: Any content from 2024, 2025 or later.
+1.  **New Features & Updates**: Any content up to ${currentMonth} ${currentYear} or later.
 2.  **Rumors & Leaks**: If a user asks about something that sounds fake or new, SEARCH FIRST before claiming it doesn't exist. It might be a recent snapshot feature.
 3.  **Specific Versions**: When asked about specific snapshot versions (e.g., "25w15a"), search for the changelog.
 
